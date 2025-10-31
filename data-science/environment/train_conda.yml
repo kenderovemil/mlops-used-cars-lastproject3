@@ -1,0 +1,21 @@
+name: train-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      # Azure ML v2 SDK
+      - azure-ai-ml==1.29.0
+      - azure-identity==1.21.0
+      
+      # Data science stack
+      - pandas==1.5.3
+      - scikit-learn==1.2.2
+      - matplotlib==3.6.3
+      - joblib==1.2.0
+      - pyarrow==14.0.2
+
+      # Experiment tracking
+      - mlflow==2.11.1

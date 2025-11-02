@@ -1,0 +1,22 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+name: model_register_job_v2
+display_name: Register Best Model
+
+description: Registers the best-performing model in MLflow
+experiment_name: used_cars_model_register
+
+code: .
+command: >
+  python model_register.py --model_input_path ${{inputs.model_input_path}} --train_csv_path ${{inputs.train_csv_path}}
+
+environment: azureml:train-env-lastproject3:3.44A1B57HH23
+compute: azureml:cpu-cluster
+
+inputs:
+  model_input_path:
+    type: uri_file
+    path: azureml://subscriptions/77c91b3f-d78c-4832-8ed2-a5dd9c501e0e/resourcegroups/streaming_autovehicle_pricing_mlops/workspaces/project_III_MLOPS/datastores/workspaceblobstore/paths/LocalUpload/14f172b59b021186e4c6802cd2dbee55923e3b975360cc6dd6320bfce9409eb2/outputs/model/model.pkl
+
+  train_csv_path:
+    type: uri_file
+    path: azureml://subscriptions/77c91b3f-d78c-4832-8ed2-a5dd9c501e0e/resourcegroups/streaming_autovehicle_pricing_mlops/workspaces/project_III_MLOPS/datastores/workspaceblobstore/paths/LocalUpload/14f172b59b021186e4c6802cd2dbee55923e3b975360cc6dd6320bfce9409eb2/outputs/train/train.csv

@@ -22,6 +22,7 @@ on:
     secrets:
       creds:
         required: true
+
 jobs:
   register-dataset:
     runs-on: ubuntu-latest
@@ -61,4 +62,4 @@ jobs:
         if: ${{ inputs.file_type != ''}}
         run: |
           az ml job create --file ${{ github.workspace }}/${{ inputs.data_file }} --resource-group ${{ inputs.resource_group }} \
-          --workspace-name ${{ inputs.workspace_name }}
+                --workspace-name ${{ inputs.workspace_name }}

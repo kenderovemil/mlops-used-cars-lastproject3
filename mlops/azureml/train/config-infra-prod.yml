@@ -1,2 +1,4 @@
 variables:
   namespace: usedcars
+  resource_group: streaming_autovehicle_pricing_MLOPS
+  workspace_name: project_III_MLOPS

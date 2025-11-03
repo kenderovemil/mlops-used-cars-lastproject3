@@ -1,0 +1,29 @@
+name: read-yaml
+
+on:
+  workflow_call:
+    inputs:
+      file_name:
+        required: true
+        type: string
+    outputs:
+      resource_group:
+        description: "Resource group name"
+        value: ${{ jobs.read.outputs.resource_group }}
+      aml_workspace:
+        description: "AML workspace name"
+        value: ${{ jobs.read.outputs.aml_workspace }}
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    outputs:
+      resource_group: ${{ steps.extract.outputs.resource_group }}
+      aml_workspace: ${{ steps.extract.outputs.aml_workspace }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: extract
+        run: |
+          content=$(cat ${{ inputs.file_name }})
+          echo "resource_group=$(echo \"$content\" | yq '.resource_group')" >> $GITHUB_OUTPUT
+          echo "aml_workspace=$(echo \"$content\" | yq '.aml_workspace')" >> $GITHUB_OUTPUT

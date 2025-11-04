@@ -26,7 +26,10 @@ jobs:
       resource_group: ${{ needs.get-config.outputs.resource_group }}
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
     secrets:
-      creds: ${{ secrets.AZURE_CREDENTIALS }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   register-dataset:
     needs: get-config
@@ -37,7 +40,10 @@ jobs:
       name: machine-failure-data
       data_file: mlops/azureml/train/data.yml
     secrets:
-      creds: ${{ secrets.AZURE_CREDENTIALS }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   register-environment:
     needs: get-config
@@ -47,12 +53,11 @@ jobs:
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
       environment_file: mlops/azureml/train/train-env.yml
       conda_file: data-science/environment/train-conda.yml
-    # secrets:
-    #   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-    #   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-    #   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     secrets:
-      creds: ${{secrets.AZURE_CREDENTIALS}}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       
   run-pipeline:
     needs: [get-config, register-environment, create-compute, register-dataset]
@@ -63,4 +68,7 @@ jobs:
       parameters-file: mlops/azureml/train/newpipeline.yml
       job-name: mlops-pipeline
     secrets:
-      creds: ${{ secrets.AZURE_CREDENTIALS }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

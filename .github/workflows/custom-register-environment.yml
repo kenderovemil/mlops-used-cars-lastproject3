@@ -46,6 +46,15 @@ jobs:
         run: az extension update -n ml
       - name: list-extentions
         run: az extension list
+      - name: debug-input-values
+        run: |
+          echo "=== Debug: Input Values ==="
+          echo "resource_group: ${{ inputs.resource_group }}"
+          echo "workspace_name: ${{ inputs.workspace_name }}"
+          echo "environment_file: ${{ inputs.environment_file }}"
+          echo "conda_file: ${{ inputs.conda_file }}"
+          echo "dockerfile-location: ${{ inputs.dockerfile-location }}"
+          echo "=========================="
       - name: create-environment-from-file-with-conda
         if: ${{ inputs.conda_file != ''}}
         run: |

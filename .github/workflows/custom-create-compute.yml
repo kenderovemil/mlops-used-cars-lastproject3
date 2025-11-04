@@ -1,28 +1,28 @@
 
 name: create-compute
 
-on: 
+on:
   workflow_call:
     inputs:
       cluster_name:
         required: true
         type: string
-      size:  
+      size:
         required: true
         type: string
-      min_instances: 
+      min_instances:
         required: true
         type: number
-      max_instances: 
+      max_instances:
         required: true
         type: number
-      resource_group:   
+      resource_group:
         required: true
         type: string
-      workspace_name:  
+      workspace_name:
         required: true
         type: string
-      cluster_tier: 
+      cluster_tier:
         required: false
         type: string
     secrets:

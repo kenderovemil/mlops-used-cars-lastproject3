@@ -1,0 +1,19 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: register_component
+display_name: register-model
+type: command
+code: ../../../data-science/src
+inputs:
+  model_name:
+    type: string
+  model_path:
+    type: uri_folder
+outputs:
+  model_info_output_path:
+    type: uri_folder
+command: >-
+  python register.py
+  --model_name ${{inputs.model_name}}
+  --model_path ${{inputs.model_path}}
+  --model_info_output_path ${{outputs.model_info_output_path}}
+environment: azureml:used-cars-env:fc1dc48e

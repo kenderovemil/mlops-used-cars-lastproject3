@@ -1,0 +1,200 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: used-cars-price-prediction-pipeline
+experiment_name: used-cars-price-prediction-exp
+description: Pipeline for used cars price prediction model training and registration
+
+inputs:
+  raw_data:
+    type: uri_file
+    path: azureml:used-cars-data@latest
+
+outputs:
+  model_info_output_path:
+    type: uri_folder
+
+settings:
+  default_datastore: azureml:workspaceblobstore
+  default_compute: azureml:cpu-cluster
+  continue_on_step_failure: false
+
+jobs:
+  prep_data:
+    type: command
+    component: ./prep.yml
+    compute: azureml:cpu-cluster
+    inputs:
+      raw_data: ${{parent.inputs.raw_data}}
+    outputs:
+      train_data:
+        mode: upload
+      test_data:
+        mode: upload
+
+  train_model:
+    type: command
+    component: ./train.yml
+    compute: azureml:cpu-cluster
+    inputs:
+      train_data: ${{parent.jobs.prep_data.outputs.train_data}}
+      test_data: ${{parent.jobs.prep_data.outputs.test_data}}
+      n_estimators: 50
+      max_depth: 10
+    outputs:
+      model_output:
+        mode: upload
+
+  register_model:
+    type: command
+    component: ./register.yml
+    compute: azureml:cpu-cluster
+    inputs:
+      model_name: "car-price-model"
+      model_path: ${{parent.jobs.train_model.outputs.model_output}}
+    outputs:
+      model_info_output_path: ${{parent.outputs.model_info_output_path}}
+
+
+# $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+# type: pipeline
+# display_name: used-cars-price-prediction-pipeline
+# experiment_name: used-cars-price-prediction-exp
+# description: Pipeline for used cars price prediction model training and registration
+
+# inputs:
+#   raw_data:
+#     type: uri_file
+#     path: azureml:used-cars-data@latest
+
+# outputs:
+#   model_info_output_path:
+#     type: uri_folder
+
+# settings:
+#   default_datastore: azureml:workspaceblobstore
+#   default_compute: azureml:cpu-cluster
+#   continue_on_step_failure: false
+
+# jobs:
+#   prep_data:
+#     type: command
+#     component: ./prep.yml
+#     compute: azureml:cpu-cluster
+#     inputs:
+#       raw_data: ${{parent.inputs.raw_data}}
+#     outputs:
+#       train_data: {}
+#       test_data: {}
+
+#   sweep_step:
+#     type: sweep
+#     trial: ./train.yml
+#     compute: azureml:cpu-cluster
+#     inputs:
+#       train_data: ${{parent.jobs.prep_data.outputs.train_data}}
+#       test_data: ${{parent.jobs.prep_data.outputs.test_data}}
+#     outputs:
+#       train_data:
+#         mode: upload
+#       test_data:
+#          mode: upload
+
+#     sampling_algorithm: random
+#     search_space:
+#       n_estimators:
+#         type: choice
+#         values: [10, 20, 30, 50]
+#       max_depth:
+#         type: choice
+#         values: [5, 10, 15, 20]
+#     objective:
+#       goal: minimize
+#       primary_metric: MSE
+#     limits:
+#       max_total_trials: 20
+#       max_concurrent_trials: 10
+#       timeout: 7200
+
+#   register_model:
+#     type: command
+#     component: ./register.yml
+#     compute: azureml:cpu-cluster
+#     inputs:
+#       model_name: "used_cars_price_prediction_model"
+#       model_path: ${{parent.jobs.sweep_step.outputs.model_output}}
+#     outputs:
+#       model_info_output_path: ${{parent.outputs.model_info_output_path}}
+
+
+# $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+# type: pipeline
+# display_name: used-cars-price-prediction-pipeline
+# experiment_name: used-cars-price-prediction-exp
+# description: Pipeline for used cars price prediction model training and registration
+
+# inputs:
+#   raw_data:
+#     type: uri_file
+#     path: azureml:used-cars-data-fixed:fc1dc48e
+
+# outputs:
+#   train_data:
+#     type: uri_folder
+#   test_data:
+#     type: uri_folder
+#   model_info_output_path:
+#     type: uri_folder
+
+# settings:
+#   default_datastore: azureml:workspaceblobstore
+#   default_compute: azureml:cpu-cluster
+#   continue_on_step_failure: false
+
+# jobs:
+#   prep_data:
+#     type: command
+#     component: /mnt/batch/tasks/shared/LS_root/mounts/clusters/lastprojectcompute/code/Users/kenderov.emil/mlops/azureml/train/prep.yml
+#     inputs:
+#       raw_data: ${{parent.inputs.raw_data}}
+#     outputs:
+#       train_data: ${{parent.outputs.train_data}}
+#       test_data: ${{parent.outputs.test_data}}
+
+#   sweep_step:
+#     type: sweep
+#     trial: /mnt/batch/tasks/shared/LS_root/mounts/clusters/lastprojectcompute/code/Users/kenderov.emil/mlops/azureml/train/train.yml
+#     inputs:
+#       train_data: ${{parent.jobs.prep_data.outputs.train_data}}
+#       test_data: ${{parent.jobs.prep_data.outputs.test_data}}
+#     outputs:
+#       model_output:
+#         type: uri_folder 
+#     sampling_algorithm: random
+#     search_space:
+#       n_estimators:
+#         type: choice
+#         values: [10, 20, 30, 50]
+#       max_depth:
+#         type: choice
+#         values: [5, 10, 15, 20]
+#     objective:
+#       goal: minimize
+#       primary_metric: MSE
+#     limits:
+#       max_total_trials: 20
+#       max_concurrent_trials: 10
+#       timeout: 7200
+
+#   register_model:
+#     type: command
+#     component: /mnt/batch/tasks/shared/LS_root/mounts/clusters/lastprojectcompute/code/Users/kenderov.emil/mlops/azureml/train/register.yml
+#     inputs:
+#       model_name:
+#         value: used_cars_price_prediction_model
+#       model_path: ${{parent.jobs.sweep_step.outputs.model_output}}
+#     outputs:
+#       model_info_output_path: ${{parent.outputs.model_info_output_path}}
+
+
+
+

@@ -7,3 +7,5 @@ prep_outputs*/
 secrets/
 *.env
 
+.ipynb_checkpoints/
+*.amltmp

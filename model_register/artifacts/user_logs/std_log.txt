@@ -1,0 +1,7 @@
+/azureml-envs/azureml_6c56ae78e12a253eefbe5018a1e4c670/lib/python3.10/site-packages/sklearn/base.py:442: InconsistentVersionWarning: Trying to unpickle estimator DecisionTreeRegressor from version 1.5.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+/azureml-envs/azureml_6c56ae78e12a253eefbe5018a1e4c670/lib/python3.10/site-packages/sklearn/base.py:442: InconsistentVersionWarning: Trying to unpickle estimator RandomForestRegressor from version 1.5.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+✅ Model validated and artifact written to: /mnt/azureml/cr/j/94457c6da6054a3c9a1c84d49daf25c7/exe/wd/local_output/reg_model_output.txt

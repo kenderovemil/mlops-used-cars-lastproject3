@@ -24,11 +24,24 @@ def main(args):
     log_path = os.path.join(args.model_info_output_path, "register_diagnostics.txt")
     write_diagnostics(args, log_path)
 
+<<<<<<< HEAD
     ml_client = MLClient(
         DefaultAzureCredential(),
         subscription_id="77c91b3f-d78c-4832-8ed2-a5dd9c501e0e",
         resource_group_name="streaming_autovehicle_pricing_MLOPS",
         workspace_name="project_III_MLOPS"
+=======
+    # Get configuration from environment variables with fallback to defaults
+    subscription_id = os.environ.get("AZUREML_ARM_SUBSCRIPTION", "77c91b3f-d78c-4832-8ed2-a5dd9c501e0e")
+    resource_group = os.environ.get("AZUREML_ARM_RESOURCEGROUP", "streaming_autovehicle_pricing_MLOPS")
+    workspace_name = os.environ.get("AZUREML_ARM_WORKSPACE_NAME", "project_III_MLOPS")
+
+    ml_client = MLClient(
+        DefaultAzureCredential(),
+        subscription_id=subscription_id,
+        resource_group_name=resource_group,
+        workspace_name=workspace_name
+>>>>>>> aef2dbfc8c91683f27c0e439296ca79eacd02c7f
     )
 
     model = Model(

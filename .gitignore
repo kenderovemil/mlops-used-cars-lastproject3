@@ -3,9 +3,14 @@ prep_outputs*/
 *.pkl
 .ipynb_checkpoints/
 .env
+<<<<<<< HEAD
 .ipynb_checkpoints/
 secrets/
 *.env
 
 .ipynb_checkpoints/
 *.amltmp
+=======
+>>>>>>> aef2dbfc8c91683f27c0e439296ca79eacd02c7f
+fresh_cleaned_repo/
+outputs_*/

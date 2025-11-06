@@ -1,0 +1,5 @@
+name: best_model_pkl
+version: 1
+type: uri_file
+path: ./outputs/model/model.pkl
+description: Best trained model for registration

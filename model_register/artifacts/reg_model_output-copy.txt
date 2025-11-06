@@ -1,0 +1,12 @@
+✅ The best model was successfully registered.
+
+📍 Model path: outputs/model/model.pkl
+📊 RMSE over test.csv: 4.15
+
+📌 MLflow Model Name: used_cars_price_prediction_model
+📌 Artifact Path: random_forest_price_regressor
+📌 Version: 5
+
+🧪 View experiment: AzureML Studio → Models → used_cars_price_prediction_model
+
+🕊️ This is an act of recognition and conciliation. The model is entered in the project memory.

@@ -1,0 +1,4 @@
+variables:
+  aml_workspace: project_III_MLOPS
+  namespace: usedcars
+  resource_group: streaming_autovehicle_pricing_MLOPS

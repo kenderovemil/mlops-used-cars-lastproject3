@@ -1,0 +1,9 @@
+outputs/
+prep_outputs*/
+*.pkl
+.ipynb_checkpoints/
+.env
+.ipynb_checkpoints/
+secrets/
+*.env
+

@@ -1,0 +1,66 @@
+Index cleaned. Creating orphan branch env-snapshot-clean-20251105T204543Z and committing only artifacts.
+Switched to a new branch 'env-snapshot-clean-20251105T204543Z'
+M	Week-17_Project_FullCode_Notebook .ipynb
+Preparing clean tree in /tmp/tmp.m8hffwM5ak
+Warning: smoke_test.sh not found; it will not be included.
+Warning: tmp_test_env/requirements-pip.txt not found; it will not be included.
+warning: adding embedded git repository: fresh_cleaned_repo/fresh_cleaned_repo
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint:
+hint: 	git submodule add <url> fresh_cleaned_repo/fresh_cleaned_repo
+hint:
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint:
+hint: 	git rm --cached fresh_cleaned_repo/fresh_cleaned_repo
+hint:
+hint: See "git help submodule" for more information.
+hint: Disable this message with "git config set advice.addEmbeddedRepo false"
+warning: adding embedded git repository: skycore_pipeline_clean-
+warning: adding embedded git repository: used-cars-mlops
+[env-snapshot-clean-20251105T204543Z (root-commit) 6e8f8e7] Clean snapshot: smoke_test + requirements (no history) - env-snapshot-clean-20251105T204543Z
+ 30 files changed, 4269 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 README.md
+ create mode 100644 README_env_snapshot.md
+ create mode 100644 Week-17_Project_FullCode_Notebook .ipynb
+ create mode 100644 azureml_jobs/train_job.py
+ create mode 100644 azureml_jobs/train_model.py
+ create mode 100644 best_registred_model/reg_model_output.txt
+ create mode 100644 data-science/components/prep_component.yml
+ create mode 100644 data-science/components/prep_job.yml
+ create mode 100644 data-science/environment/train_conda.yml
+ create mode 100644 data-science/src/prep.py
+ create mode 100644 data-science/src/prepare.py
+ create mode 100644 data-science/src/register.py
+ create mode 100644 data-science/src/train.py
+ create mode 100644 data/used_cars.csv
+ create mode 160000 fresh_cleaned_repo/fresh_cleaned_repo
+ create mode 100644 git_cleanup_log.txt
+ create mode 100644 mlops/azureml/train/data.yml
+ create mode 100644 mlops/azureml/train/newpipeline.yml
+ create mode 100644 mlops/azureml/train/prep.yml
+ create mode 100644 mlops/azureml/train/register.yml
+ create mode 100644 mlops/azureml/train/train-env.yml
+ create mode 100644 mlops/azureml/train/train.yml
+ create mode 100644 model_register/.amlignore
+ create mode 100644 model_register/.amlignore.amltmp
+ create mode 100644 model_training/train_model.py
+ create mode 100644 notebooks/train_model.py
+ create mode 160000 skycore_pipeline_clean-
+ create mode 100644 src/train.py
+ create mode 160000 used-cars-mlops
+Attempting push to origin: https://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@github.com/kenderovemil/mlops-used-cars-lastproject3.git
+remote: 
+remote: Create a pull request for 'env-snapshot-clean-20251105T204543Z' on GitHub by visiting:        
+remote:      https://github.com/kenderovemil/mlops-used-cars-lastproject3/pull/new/env-snapshot-clean-20251105T204543Z        
+remote: 
+To https://github.com/kenderovemil/mlops-used-cars-lastproject3.git
+ * [new branch]      env-snapshot-clean-20251105T204543Z -> env-snapshot-clean-20251105T204543Z
+branch 'env-snapshot-clean-20251105T204543Z' set up to track 'origin/env-snapshot-clean-20251105T204543Z'.
+Push succeeded.
+Backup saved at /tmp/repo_backup_20251105T204543Z/repo_backup.tar.gz
+=== GIT CLEANUP + ORPHAN PREP END Wed Nov  5 22:11:33 UTC 2025 ===

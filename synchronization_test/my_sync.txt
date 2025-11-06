@@ -1,0 +1,1 @@
+This is synchronization test between Github and Azure. 

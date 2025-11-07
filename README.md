@@ -91,10 +91,15 @@ Increased customer trust and profitability
 ## 🧠 Author
 
 Emil Kenderov — AI student
+env-snapshot-clean-20251105T204543Z
+ba77a79c1622b0058c61ec714b97e0fe64a74bab
 
-## 📖 Documentation
+## 🤖 GitHub Copilot Instructions
 
-- [COPILOT_GUIDE.md](./COPILOT_GUIDE.md) - Guidelines for GitHub Copilot assistance
-- [SECRETS_SETUP.md](./SECRETS_SETUP.md) - Azure secrets configuration
-- [CURSOR_GUIDE.md](./mlops/docs/CURSOR_GUIDE.md) - Cursor AI validation guidelines
+Copilot is invited to assist with:
+- YAML structure suggestions
+- Python code completion
+- Documentation refinement
+
+Copilot should not modify `docs/` unless explicitly invited.
 

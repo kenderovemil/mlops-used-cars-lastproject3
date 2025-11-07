@@ -1,21 +1,14 @@
+# .github/workflows/cursor_validate.yml
 name: Cursor Validation
 
 on:
   push:
     paths:
-      - mlops/cursor_zone/**
+      - 'mlops/cursor_zone/**'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    env:
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-      AZURE_WORKSPACE_NAME: ${{ secrets.AZURE_WORKSPACE_NAME }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3

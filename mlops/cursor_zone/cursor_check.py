@@ -1,4 +1,8 @@
 # cursor_check.py
+# cursor_check.py
+# Cursor uses this script to validate pipeline YAMLs before registration.
+# It loads the pipeline, checks structure, and prints validation results.
+
 from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
 from azure.ai.ml.entities import PipelineJob

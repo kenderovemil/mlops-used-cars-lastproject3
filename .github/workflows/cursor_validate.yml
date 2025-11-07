@@ -1,28 +1,32 @@
----
 name: Cursor Validation
+
 on:
   push:
     paths:
       - mlops/cursor_zone/**
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    env:
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      AZURE_WORKSPACE_NAME: ${{ secrets.AZURE_WORKSPACE_NAME }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.8"
+
       - name: Install dependencies
         run: pip install azure-ai-ml
+
       - name: Run cursor_check.py
         run: python mlops/cursor_zone/cursor_check.py
-env:
-  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-  AZURE_WORKSPACE_NAME: ${{ secrets.AZURE_WORKSPACE_NAME }}
-
-

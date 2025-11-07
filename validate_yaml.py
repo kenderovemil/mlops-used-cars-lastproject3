@@ -115,7 +115,19 @@ def check_github_actions(content: dict) -> List[str]:
         messages.append("⚠️  Missing 'name' field (recommended)")
         
     if 'on' not in content:
-        messages.append("❌ Missing 'on' field (required for workflows)")
+        # Check if this is a reusable workflow (workflow_call)
+        is_reusable = False
+        if 'jobs' in content:
+            for job_name, job_config in content.get('jobs', {}).items():
+                if isinstance(job_config, dict):
+                    # Reusable workflows don't need 'on' at top level
+                    is_reusable = True
+                    break
+        
+        if not is_reusable:
+            messages.append("❌ Missing 'on' field (required for workflows)")
+        else:
+            messages.append("ℹ️  Appears to be a reusable workflow (workflow_call)")
         
     if 'jobs' not in content:
         messages.append("❌ Missing 'jobs' field")
@@ -182,22 +194,37 @@ def validate_file(file_path: str) -> bool:
     
     # Determine file type and run appropriate checks
     messages = []
+    validation_type = None
     
     file_name = os.path.basename(file_path).lower()
     parent_dir = os.path.basename(os.path.dirname(file_path))
     
+    # Check if content is a dictionary (some YAMLs might be lists or other types)
+    if not isinstance(content, dict):
+        messages.append("ℹ️  YAML content is not a dictionary")
+        for msg in messages:
+            print(msg)
+        return True
+    
     if 'workflow' in file_path or parent_dir == 'workflows':
         messages = check_github_actions(content)
+        validation_type = "GitHub Actions Workflow"
     elif 'conda' in file_name or 'environment' in file_name:
         messages = check_conda_env(content)
-    elif isinstance(content, dict) and content.get('type') in ['pipeline', 'command']:
+        validation_type = "Conda Environment"
+    elif content.get('type') in ['pipeline', 'command', 'sweep']:
         messages = check_azure_ml_schema(file_path, content)
+        validation_type = f"Azure ML {content.get('type').title()}"
+    
+    # Print validation type
+    if validation_type:
+        print(f"ℹ️  Validated as: {validation_type}")
     
     # Print validation messages
     if messages:
         for msg in messages:
             print(msg)
-    else:
+    elif not validation_type:
         print("ℹ️  No specific validation rules applied")
     
     return True

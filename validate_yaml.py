@@ -25,10 +25,9 @@ from typing import List, Tuple
 try:
     import yaml
 except ImportError:
-    print("⚠️  PyYAML not installed. Installing...")
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "pyyaml"])
-    import yaml
+    print("❌ PyYAML is not installed.")
+    print("Please install it with: pip install pyyaml")
+    sys.exit(1)
 
 
 def validate_yaml_syntax(file_path: str) -> Tuple[bool, str]:
@@ -99,6 +98,33 @@ def check_azure_ml_schema(file_path: str, content: dict) -> List[str]:
     return messages
 
 
+def check_for_secrets(obj, path="") -> bool:
+    """
+    Recursively check if an object contains secret references.
+    
+    Args:
+        obj: Object to check (dict, list, string, etc.)
+        path: Current path in the object tree (for debugging)
+        
+    Returns:
+        True if secrets are referenced, False otherwise
+    """
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if isinstance(key, str) and 'secret' in key.lower():
+                return True
+            if check_for_secrets(value, f"{path}.{key}"):
+                return True
+    elif isinstance(obj, list):
+        for i, item in enumerate(obj):
+            if check_for_secrets(item, f"{path}[{i}]"):
+                return True
+    elif isinstance(obj, str):
+        if 'secrets.' in obj or '${{ secrets.' in obj:
+            return True
+    return False
+
+
 def check_github_actions(content: dict) -> List[str]:
     """
     Perform basic checks for GitHub Actions workflow files.
@@ -114,27 +140,21 @@ def check_github_actions(content: dict) -> List[str]:
     if 'name' not in content:
         messages.append("⚠️  Missing 'name' field (recommended)")
         
-    if 'on' not in content:
-        # Check if this is a reusable workflow (workflow_call)
-        is_reusable = False
-        if 'jobs' in content:
-            for job_name, job_config in content.get('jobs', {}).items():
-                if isinstance(job_config, dict):
-                    # Reusable workflows don't need 'on' at top level
-                    is_reusable = True
-                    break
-        
-        if not is_reusable:
-            messages.append("❌ Missing 'on' field (required for workflows)")
-        else:
-            messages.append("ℹ️  Appears to be a reusable workflow (workflow_call)")
+    # Check for 'on' field - note that YAML parser may convert 'on' to boolean True
+    on_field = content.get('on') or content.get(True)
+    
+    if not on_field:
+        messages.append("❌ Missing 'on' field (required for workflows)")
+    else:
+        # Check if this is a reusable workflow
+        if isinstance(on_field, dict) and 'workflow_call' in on_field:
+            messages.append("ℹ️  Reusable workflow (workflow_call)")
         
     if 'jobs' not in content:
         messages.append("❌ Missing 'jobs' field")
         
     # Check for secrets references
-    yaml_str = yaml.dump(content)
-    if 'secrets.' in yaml_str:
+    if check_for_secrets(content):
         messages.append("ℹ️  Uses GitHub Secrets (ensure they are configured)")
     
     return messages

@@ -13,11 +13,25 @@ Please see [COPILOT_GUIDE.md](./COPILOT_GUIDE.md) for detailed guidelines and bo
 
 ## 📌 Problem Statement
 
-An automobile dealership in Las Vegas specializes in selling luxury and non-luxury vehicles. They cater to diverse customer preferences with varying vehicle specifications, such as mileage, engine capacity, and seating capacity. However, the dealership faces significant challenges in maintaining consistency and efficiency across its pricing strategy due to reliance on manual processes and disconnected systems. Pricing evaluations are prone to errors, updates are delayed, and scaling operations are difficult as demand grows. These inefficiencies impact revenue and customer trust. Recognizing the need for a reliable and scalable solution, the dealership is seeking to implement a unified system that ensures seamless integration of data-driven pricing decisions, adaptability to changing market conditions, and operational efficiency.
+An automobile dealership in Las Vegas specializes in selling luxury and non-luxury vehicles. They cater to diverse customer preferences with varying vehicle specifications, such as mileage, engine capacity, and seating capacity. 
+
+However, the dealership faces significant challenges in maintaining consistency and efficiency across its pricing strategy. These challenges stem from reliance on manual processes and disconnected systems. Pricing evaluations are prone to errors, updates are delayed, and scaling operations is difficult as demand grows. These inefficiencies impact revenue and customer trust. 
+
+Recognizing the need for a reliable and scalable solution, the dealership is seeking to implement a unified system. This system will ensure seamless integration of data-driven pricing decisions, adaptability to changing market conditions, and operational efficiency.
 
 ## 🎯 Objective
 
-The dealership has hired you as an MLOps Engineer to design and implement an MLOps pipeline that automates the pricing workflow. This pipeline will encompass data cleaning, preprocessing, transformation, model building, training, evaluation, and registration with CI/CD capabilities to ensure continuous integration and delivery. Your role is to overcome challenges such as integrating disparate data sources, maintaining consistent model performance, and enabling scalable, automated updates to meet evolving business needs. The expected outcomes are a robust, automated system that improves pricing accuracy, operational efficiency, and scalability, driving increased profitability and customer satisfaction.
+The dealership has hired you as an MLOps Engineer to design and implement an MLOps pipeline that automates the pricing workflow. This pipeline will encompass:
+- Data cleaning, preprocessing, and transformation
+- Model building, training, and evaluation
+- Model registration with CI/CD capabilities for continuous integration and delivery
+
+Your role is to overcome challenges such as:
+- Integrating disparate data sources
+- Maintaining consistent model performance
+- Enabling scalable, automated updates to meet evolving business needs
+
+The expected outcomes are a robust, automated system that improves pricing accuracy, operational efficiency, and scalability, driving increased profitability and customer satisfaction.
 
 ## 📊 Dataset Description
 Feature	Description

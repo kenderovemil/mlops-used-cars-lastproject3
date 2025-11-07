@@ -28,14 +28,12 @@ on:
     secrets:
       AZURE_CLIENT_ID:
         required: true
-      AZURE_CLIENT_SECRET:
-        required: true
       AZURE_TENANT_ID:
         required: true
       AZURE_SUBSCRIPTION_ID:
         required: true
 jobs:
-  register-dataset:
+  create-compute:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,44 +41,17 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
+        
       - name: Azure Login
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: SERVICE_PRINCIPAL
-
-      - name: Install ML extension
-        run: az extension add -n ml -y
-
-      - name: Register dataset
-        run: az ml data create \
-              --file mlops/azureml/train/data.yml \
-              --resource-group streaming_autovehicle_pricing_MLOPS \
-              --workspace-name project_III_MLOPS \
-              --name machine-failure-data
-
-  create-compute:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Azure login with service principal
-        run: |
-          az login --service-principal \
-            --username $AZURE_CLIENT_ID \
-            --password $AZURE_CLIENT_SECRET \
-            --tenant $AZURE_TENANT_ID
-          az account set --subscription $AZURE_SUBSCRIPTION_ID
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          
       - name: install-extension
         run:  az extension add -n ml -y
+        
       - name: update-extension
         run: az extension update -n ml
       - name: create-compute-default-tier

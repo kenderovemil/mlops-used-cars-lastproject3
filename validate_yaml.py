@@ -19,7 +19,6 @@ Example:
 import argparse
 import sys
 import os
-from pathlib import Path
 from typing import List, Tuple
 
 try:
@@ -140,11 +139,13 @@ def check_github_actions(content: dict) -> List[str]:
         messages.append("⚠️  Missing 'name' field (recommended)")
         
     # Check for 'on' field - note that YAML parser may convert 'on' to boolean True
-    on_field = content.get('on', content.get(True))
+    # We need to check both 'on' (string key) and True (boolean key from YAML parsing)
+    has_on_field = 'on' in content or True in content
+    on_field = content.get('on') if 'on' in content else content.get(True)
     
-    if not on_field:
+    if not has_on_field:
         messages.append("❌ Missing 'on' field (required for workflows)")
-    else:
+    elif on_field is not None:
         # Check if this is a reusable workflow
         if isinstance(on_field, dict) and 'workflow_call' in on_field:
             messages.append("ℹ️  Reusable workflow (workflow_call)")

@@ -17,4 +17,5 @@ command: >-
   --raw_data ${{inputs.raw_data}}
   --train_data ${{outputs.train_data}}
   --test_data ${{outputs.test_data}}
-environment: azureml:used-cars-env:fc1dc48e
+environment: azureml:used-cars-env:1
+

@@ -1,0 +1,16 @@
+name: prep_data_component
+version: 1
+type: command
+display_name: prep_data
+description: Prepare raw data for training
+code: ./src
+command: >-
+  python prep_data.py --input_data ${{inputs.raw_data}} --output_data ${{outputs.clean_data}}
+inputs:
+  raw_data:
+    type: uri_file
+outputs:
+  clean_data:
+    type: uri_file
+environment: azureml:train-env:3
+compute: cpu-cluster

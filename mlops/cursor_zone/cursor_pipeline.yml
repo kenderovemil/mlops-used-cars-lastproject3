@@ -1,4 +1,8 @@
 # cursor_pipeline.yml
+# This pipeline is used by Cursor to validate component structure and AzureML integration.
+# Do not modify unless explicitly invited.
+
+# cursor_pipeline.yml
 name: cursor-validation-pipeline
 description: Pipeline for Cursor to validate component structure and AzureML integration
 version: 1

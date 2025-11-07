@@ -72,6 +72,13 @@ Increased customer trust and profitability
 Emil Kenderov — AI student
 >>>>>>> ba77a79c1622b0058c61ec714b97e0fe64a74bab
 <<<<<<< HEAD
-# Triggering workflow
-=======
->>>>>>> aef2dbfc8c91683f27c0e439296ca79eacd02c7f
+
+## 🤖 GitHub Copilot Instructions
+
+Copilot is invited to assist with:
+- YAML structure suggestions
+- Python code completion
+- Documentation refinement
+
+Copilot should not modify `docs/` unless explicitly invited.
+

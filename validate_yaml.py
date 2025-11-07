@@ -98,13 +98,12 @@ def check_azure_ml_schema(file_path: str, content: dict) -> List[str]:
     return messages
 
 
-def check_for_secrets(obj, path="") -> bool:
+def check_for_secrets(obj) -> bool:
     """
     Recursively check if an object contains secret references.
     
     Args:
         obj: Object to check (dict, list, string, etc.)
-        path: Current path in the object tree (for debugging)
         
     Returns:
         True if secrets are referenced, False otherwise
@@ -113,11 +112,11 @@ def check_for_secrets(obj, path="") -> bool:
         for key, value in obj.items():
             if isinstance(key, str) and 'secret' in key.lower():
                 return True
-            if check_for_secrets(value, f"{path}.{key}"):
+            if check_for_secrets(value):
                 return True
     elif isinstance(obj, list):
-        for i, item in enumerate(obj):
-            if check_for_secrets(item, f"{path}[{i}]"):
+        for item in obj:
+            if check_for_secrets(item):
                 return True
     elif isinstance(obj, str):
         if 'secrets.' in obj or '${{ secrets.' in obj:
@@ -141,7 +140,7 @@ def check_github_actions(content: dict) -> List[str]:
         messages.append("⚠️  Missing 'name' field (recommended)")
         
     # Check for 'on' field - note that YAML parser may convert 'on' to boolean True
-    on_field = content.get('on') or content.get(True)
+    on_field = content.get('on', content.get(True))
     
     if not on_field:
         messages.append("❌ Missing 'on' field (required for workflows)")
@@ -250,18 +249,22 @@ def validate_file(file_path: str) -> bool:
     return True
 
 
-def find_yaml_files(root_dir: str = '.') -> List[str]:
+def find_yaml_files(root_dir: str = '.', excluded_dirs: set = None) -> List[str]:
     """
     Find all YAML files in the project.
     
     Args:
         root_dir: Root directory to search from
+        excluded_dirs: Set of directory names to exclude (default: common build/cache dirs)
         
     Returns:
         List of YAML file paths
     """
+    if excluded_dirs is None:
+        excluded_dirs = {'.git', 'node_modules', 'venv', 'env', '__pycache__', 
+                        'outputs', '.ipynb_checkpoints', '.pytest_cache'}
+    
     yaml_files = []
-    excluded_dirs = {'.git', 'node_modules', 'venv', 'env', '__pycache__', 'outputs', '.ipynb_checkpoints'}
     
     for root, dirs, files in os.walk(root_dir):
         # Remove excluded directories

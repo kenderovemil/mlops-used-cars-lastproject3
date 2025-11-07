@@ -1,20 +1,39 @@
-<<<<<<< HEAD
-# Used Cars MLOps Project
+# 🚗 Used Cars Pricing MLOps Pipeline
 
-This is the initial structure.
-=======
-# mlops-used-cars-mirror
-Used Cars Modeling
-🚗 Used Cars Pricing MLOps Pipeline
 This repository contains an end-to-end MLOps pipeline for predicting used car prices, designed for an automobile dealership in Las Vegas. The pipeline automates data preparation, model training, evaluation, registration, and CI/CD deployment using Azure Machine Learning and GitHub Actions.
 
-📌 Problem Statement
-Problem Statement: An automobile dealership in Los Vegas specializes in selling luxury and non-luxury vehicles. They cater to diverse customer preferences with varying vehicle specifications, such as mileage, engine capacity, and seating capacity. However, the dealership faces significant challenges in maintaining consistency and efficiency across its pricing strategy due to reliance on manual processes and disconnected systems. Pricing evaluations are prone to errors, updates are delayed, and scaling operations are difficult as demand grows. These inefficiencies impact revenue and customer trust. Recognizing the need for a reliable and scalable solution, the dealership is seeking to implement a unified system that ensures seamless integration of data-driven pricing decisions, adaptability to changing market conditions, and operational efficiency.
+## 🤖 Welcome, GitHub Copilot!
 
-🎯 Objective
-The dealership has hired you as an MLOps Engineer to design and implement an MLOps pipeline that automates the pricing workflow. This pipeline will encompass data cleaning, preprocessing, transformation, model building, training, evaluation, and registration with CI/CD capabilities to ensure continuous integration and delivery. Your role is to overcome challenges such as integrating disparate data sources, maintaining consistent model performance, and enabling scalable, automated updates to meet evolving business needs. The expected outcomes are a robust, automated system that improves pricing accuracy, operational efficiency, and scalability, driving increased profitability and customer satisfaction.
+This project welcomes assistance from GitHub Copilot for:
+- **YAML structure suggestions** for Azure ML pipelines and GitHub Actions
+- **Python code completion** for ML scripts and data processing
+- **Documentation refinement** to improve clarity and maintainability
 
-📊 Dataset Description
+Please see [COPILOT_GUIDE.md](./COPILOT_GUIDE.md) for detailed guidelines and boundaries.
+
+## 📌 Problem Statement
+
+An automobile dealership in Las Vegas specializes in selling luxury and non-luxury vehicles. They cater to diverse customer preferences with varying vehicle specifications, such as mileage, engine capacity, and seating capacity. 
+
+However, the dealership faces significant challenges in maintaining consistency and efficiency across its pricing strategy. These challenges stem from reliance on manual processes and disconnected systems. Pricing evaluations are prone to errors, updates are delayed, and scaling operations is difficult as demand grows. These inefficiencies impact revenue and customer trust. 
+
+Recognizing the need for a reliable and scalable solution, the dealership is seeking to implement a unified system. This system will ensure seamless integration of data-driven pricing decisions, adaptability to changing market conditions, and operational efficiency.
+
+## 🎯 Objective
+
+The dealership has hired you as an MLOps Engineer to design and implement an MLOps pipeline that automates the pricing workflow. This pipeline will encompass:
+- Data cleaning, preprocessing, and transformation
+- Model building, training, and evaluation
+- Model registration with CI/CD capabilities for continuous integration and delivery
+
+Your role is to overcome challenges such as:
+- Integrating disparate data sources
+- Maintaining consistent model performance
+- Enabling scalable, automated updates to meet evolving business needs
+
+The expected outcomes are a robust, automated system that improves pricing accuracy, operational efficiency, and scalability, driving increased profitability and customer satisfaction.
+
+## 📊 Dataset Description
 Feature	Description
 Segment	Luxury or non-luxury vehicle classification
 Kilometers_Driven	Total kilometers driven
@@ -68,10 +87,14 @@ GitHub Actions Workflow
 Improved pricing accuracy
 Faster updates and scalability
 Increased customer trust and profitability
-🧠 Author
+
+## 🧠 Author
+
 Emil Kenderov — AI student
->>>>>>> ba77a79c1622b0058c61ec714b97e0fe64a74bab
-<<<<<<< HEAD
-# Triggering workflow
-=======
->>>>>>> aef2dbfc8c91683f27c0e439296ca79eacd02c7f
+
+## 📖 Documentation
+
+- [COPILOT_GUIDE.md](./COPILOT_GUIDE.md) - Guidelines for GitHub Copilot assistance
+- [SECRETS_SETUP.md](./SECRETS_SETUP.md) - Azure secrets configuration
+- [CURSOR_GUIDE.md](./mlops/docs/CURSOR_GUIDE.md) - Cursor AI validation guidelines
+

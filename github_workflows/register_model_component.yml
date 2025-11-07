@@ -1,0 +1,13 @@
+name: register_model_component
+version: 1
+type: command
+display_name: register_model
+description: Register the best model
+code: ./src
+command: >-
+  python register.py --model ${{inputs.best_model}}
+inputs:
+  best_model:
+    type: uri_folder
+environment: azureml:train-env:3
+compute: cpu-cluster

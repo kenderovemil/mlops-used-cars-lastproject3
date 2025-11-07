@@ -1,0 +1,28 @@
+name: Run AzureML Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - newpipeline.yml
+      - .github/workflows/azureml-pipeline.yml
+
+jobs:
+  submit-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Submit pipeline job
+        uses: azure/ML-action@v1
+        with:
+          workspace-name: project_iii_mlops
+          resource-group: streaming_autovehicle_pricing_MLOPS
+          subscription-id: 77c91b3f-d78c-4832-8ed2-a5dd9c501e0e
+          job-input-path: newpipeline.yml

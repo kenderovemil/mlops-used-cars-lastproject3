@@ -1,0 +1,16 @@
+name: train_model_component
+version: 1
+type: command
+display_name: train_model
+description: Train a model on prepared data
+code: ./src
+command: >-
+  python train.py --data ${{inputs.clean_data}} --output ${{outputs.model_output}}
+inputs:
+  clean_data:
+    type: uri_file
+outputs:
+  model_output:
+    type: uri_folder
+environment: azureml:train-env:3
+compute: cpu-cluster

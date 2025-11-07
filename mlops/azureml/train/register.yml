@@ -16,4 +16,5 @@ command: >-
   --model_name ${{inputs.model_name}}
   --model_path ${{inputs.model_path}}
   --model_info_output_path ${{outputs.model_info_output_path}}
-environment: azureml:used-cars-env:fc1dc48e
+environment: azureml:used-cars-env:1
+

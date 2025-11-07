@@ -1,0 +1,16 @@
+name: tune_model_component
+version: 1
+type: command
+display_name: tune_model
+description: Hyperparameter tuning
+code: ./src
+command: >-
+  python tune.py --model ${{inputs.model_output}} --output ${{outputs.best_model}}
+inputs:
+  model_output:
+    type: uri_folder
+outputs:
+  best_model:
+    type: uri_folder
+environment: azureml:train-env:3
+compute: cpu-cluster

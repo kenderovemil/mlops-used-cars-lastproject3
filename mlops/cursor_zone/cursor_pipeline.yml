@@ -1,0 +1,14 @@
+# cursor_pipeline.yml
+name: cursor-validation-pipeline
+description: Pipeline for Cursor to validate component structure and AzureML integration
+version: 1
+
+jobs:
+  - job: validate_component
+    type: command
+    component: file:../components/data_prep.yml
+    inputs:
+      raw_data_path: azureml:used_cars_input_data:1
+    outputs:
+      clean_data_path: azureml:used_cars_cleaned_data:1
+    compute: azureml:cpu-cluster

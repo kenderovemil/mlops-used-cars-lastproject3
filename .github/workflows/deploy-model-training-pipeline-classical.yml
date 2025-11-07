@@ -29,6 +29,7 @@ jobs:
       cluster_tier: dedicated
       resource_group: ${{ needs.get-config.outputs.resource_group }}
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+      auth-type: OIDC
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -42,6 +43,7 @@ jobs:
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
       name: machine-failure-data
       data_file: mlops/azureml/train/data.yml
+      auth-type: OIDC
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -55,6 +57,7 @@ jobs:
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
       environment_file: mlops/azureml/train/train-env.yml
       conda_file: mlops/azureml/train/train-conda.yml
+      auth-type: OIDC
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -68,6 +71,7 @@ jobs:
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
       parameters-file: mlops/azureml/train/newpipeline.yml
       job-name: mlops-pipeline
+      auth-type: OIDC
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

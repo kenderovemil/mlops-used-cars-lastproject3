@@ -10,10 +10,10 @@ on:
     outputs:
       resource_group:
         description: "Resource group name"
-        value: ${{ jobs.read.outputs.resource_group }}
+        value: ${{ jobs.read-yaml.outputs.resource_group }}
       aml_workspace:
         description: "AML workspace name"
-        value: ${{ jobs.read.outputs.aml_workspace }}
+        value: ${{ jobs.read-yaml.outputs.aml_workspace }}
     secrets:
       AZURE_CLIENT_ID:
         required: true
@@ -27,7 +27,7 @@ permissions:
   id-token: write
 
 jobs:
-  read:
+  read-yaml:
     runs-on: ubuntu-latest
     permissions:
       contents: read

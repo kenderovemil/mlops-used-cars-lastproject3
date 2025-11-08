@@ -1,0 +1,86 @@
+Cursor Review – Azure Login Failures (OIDC / IDENTITY)
+=====================================================
+
+Context
+- Recurrent GitHub Actions failure messages report "Unsupported value 'OIDC'" and "Passing the managed identity ID with --username is no longer supported" even though the workflows send `auth-type: IDENTITY`.
+- All Azure logins happen inside reusable workflows that are invoked from `deploy-model-training-pipeline-classical.yml`.
+
+Findings
+1. The reusable jobs explicitly force `auth-type: IDENTITY`, which makes `azure/login@v1` execute `az login --identity --username <clientId>` (managed identity path). That matches the CLI failure complaining about `--username`. On GitHub-hosted runners the workload identity token should be exchanged instead, so forcing the managed-identity flow is the root trigger.
+
+```32:37:.github/workflows/deploy-model-training-pipeline-classical.yml
+        auth-type: IDENTITY
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+```49:54:.github/workflows/custom-create-compute.yml
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            auth-type: ${{ inputs.auth-type }}
+```
+
+2. All reusable workflows pin `azure/login@v1`, which still calls `az login --identity --username`. Azure CLI 2.61+ removed `--username` for managed identities, causing the observed error. Microsoft fixed this in `azure/login@v2`, which issues `az login --identity --client-id` only for genuine managed identities and uses the federated token exchange otherwise. Upgrading is mandatory before any other change.
+
+```41:51:.github/workflows/custom-run-pipeline.yml
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            auth-type: ${{ inputs.auth-type }}
+```
+
+3. `auth-type` is optional in every reusable workflow and lacks a default. Any direct invoker that forgets to pass it will silently call `azure/login@v1` with an empty value (falling back to AUTO/service-principal). Making it `required: true` or setting `default: IDENTITY` inside the reusable removes this foot‑gun.
+
+```22:30:.github/workflows/custom-register-dataset.yml
+        auth-type:
+          required: false
+          type: string
+```
+
+4. Required OIDC permissions are present both at the caller level and inside the reusable jobs, so loss of `id-token` is unlikely the culprit.
+
+```11:13:.github/workflows/deploy-model-training-pipeline-classical.yml
+permissions:
+  id-token: write
+  contents: read
+```
+
+```35:39:.github/workflows/custom-register-environment.yml
+    register-environment:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        id-token: write
+```
+
+5. No workflow performs a manual `az login` step; all CLI interactions happen after the `azure/login` step, so credentials only come from the action (good posture).
+
+Hypotheses & Impact
+- Because `auth-type: IDENTITY` is interpreted as "use the managed identity flow" in `azure/login@v1`, the action never attempts to request the GitHub OIDC token. Azure CLI therefore defaults to the deprecated managed identity flags, triggering the failure on every run.
+- Upgrading to `azure/login@v2` and letting the action detect the workload identity flow (by omitting `auth-type` entirely or switching to `SERVICE_PRINCIPAL`) should unblock the login. Keep workload identity secrets identical.
+- The prior "Unsupported value 'OIDC'" error likely came from an earlier revision where `auth-type: OIDC` was passed. No remaining references are present, so once the action version is bumped the last blocker is the managed-identity misrouting described above.
+
+Evidence & Gaps
+- Local repo inspection confirms every caller passes `auth-type: IDENTITY`; no other auth modes remain.
+- Cannot fetch the failing run logs from the GitHub API within this environment. Use `gh run view <run-id> --job <job-id> --log` or the Actions UI to capture the Azure Login step and store it under `ai_reviews/log_extracts/azure_login_debug.txt` (template provided).
+
+Recommended Remediations (detailed steps in action_plan.md)
+- Update each reusable workflow to `uses: azure/login@v2` and remove the explicit `auth-type` override so that `azure/login` selects the OIDC token exchange automatically.
+- Alternatively, if retaining the field for clarity, set `auth-type: SERVICE_PRINCIPAL` (per Microsoft guidance for workload identities) after moving to v2.
+- Mark `auth-type` input as `required: true` with `default: SERVICE_PRINCIPAL` (or remove the input entirely) to prevent future regressions.
+- Confirm the federated credential on the App Registration lists the subjects for `repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main` and `repo:kenderovemil/mlops-used-cars-lastproject3:pull_request`. Command: `az ad app federated-credential list --id $AZURE_CLIENT_ID`.
+- Keep the caller workflow-level `permissions` block; nothing further needed there.
+
+Next Validation Step
+1. Apply the YAML changes in a feature branch.
+2. Capture Azure Login logs after the next pipeline run; confirm the action prints "Login using Workload Identity Federation" and skips `--identity`.
+3. Re-run the full pipeline (`deploy-model-training-pipeline-classical.yml`) on both `push` and `pull_request` events targeting `main`.
+

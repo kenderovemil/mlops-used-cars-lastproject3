@@ -1,0 +1,20 @@
+Azure Login Log Extract – placeholder
+------------------------------------
+
+Paste the Azure Login step output from the next failing or successful diagnostic run between the markers below. Suggested capture command:
+
+```
+gh run view <run-id> --job <job-id> --log --json name,steps | jq -r '.steps[] | select(.name=="Azure Login").log'
+```
+
+--- begin azure-login excerpt ---
+<n/a – awaiting capture>
+--- end azure-login excerpt ---
+
+Context checklist to record alongside the log:
+- Run URL:
+- Workflow file:
+- Event name / ref:
+- Whether debug context step was enabled:
+
+Update this file once the log is captured to keep the history inside the repository.

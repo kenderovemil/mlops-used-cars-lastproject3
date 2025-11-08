@@ -20,6 +20,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Update Azure CLI
+        run: |
+          sudo az upgrade --yes
+          az --version
+
       - name: Debug context
         run: |
           echo "GITHUB_REF=${{ github.ref }}"

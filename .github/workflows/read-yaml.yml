@@ -23,6 +23,11 @@ jobs:
       aml_workspace: ${{ steps.extract.outputs.aml_workspace }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Update Azure CLI
+        run: |
+          sudo az upgrade --yes
+          az --version
       
       - name: Install yq
         run: |

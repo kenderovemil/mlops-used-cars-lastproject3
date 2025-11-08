@@ -55,6 +55,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Update Azure CLI
+        run: |
+          sudo az upgrade --yes
+          az --version
+
       - name: Install ML extension
         run: az extension add -n ml -y
         

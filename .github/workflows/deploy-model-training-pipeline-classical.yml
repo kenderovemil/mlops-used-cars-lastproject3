@@ -13,6 +13,14 @@ permissions:
   contents: read
 
 jobs:
+  check-azure-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Azure CLI
+        run: |
+          sudo az upgrade --yes
+          az --version
+
   get-config:
     uses: ./.github/workflows/read-yaml.yml
     with:

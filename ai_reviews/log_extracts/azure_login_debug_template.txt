@@ -1,0 +1,145 @@
+================================================================================
+Azure Login Debug - Log Extracts Template
+================================================================================
+
+This file contains templates for capturing diagnostic information from
+GitHub Actions workflow runs. Fill in with actual data from workflow executions.
+
+================================================================================
+1. DEBUG CONTEXT OUTPUT
+================================================================================
+
+After implementing debug steps, copy output here from workflow run logs:
+
+Example from: custom-create-compute.yml → Debug Azure Login Context step
+
+=== Azure Login Diagnostic ===
+GitHub Ref: [ACTUAL_VALUE]
+GitHub Event: [ACTUAL_VALUE]
+GitHub Repository: [ACTUAL_VALUE]
+Auth-Type Input: '[ACTUAL_VALUE]'
+Client ID present: [true/false]
+Tenant ID present: [true/false]
+Subscription ID present: [true/false]
+================================
+
+================================================================================
+2. AZURE LOGIN STEP OUTPUT
+================================================================================
+
+Copy the complete output from the "Azure Login" step:
+
+Example:
+Note: Azure CLI 2.x.x
+[Using federated identity token OR Attempting Azure CLI login...]
+[Success message OR Error message]
+
+================================================================================
+3. ERROR MESSAGES (If Any)
+================================================================================
+
+If Azure Login fails, copy all error messages:
+
+Example error patterns to capture:
+- "Unsupported value 'OIDC'"
+- "Attempting Azure CLI login by using user-assigned managed identity"
+- "Passing the managed identity ID with --username is no longer supported"
+- "OIDC token exchange failed"
+- "Invalid subject"
+- Any other authentication-related errors
+
+================================================================================
+4. WORKFLOW RUN METADATA
+================================================================================
+
+Workflow Run URL: [URL from GitHub Actions]
+Workflow Name: [deploy-model-training-pipeline, etc.]
+Trigger Type: [push / pull_request]
+Branch: [main / feature-branch-name]
+Commit SHA: [full commit hash]
+Run ID: [workflow run ID from URL]
+Status: [success / failure]
+Started: [timestamp]
+Duration: [time taken]
+
+================================================================================
+5. JOB-SPECIFIC LOGS
+================================================================================
+
+For each job that uses Azure Login, note status:
+
+create-compute:
+  Status: [success / failure]
+  Azure Login: [success / error message]
+  
+register-dataset:
+  Status: [success / failure]
+  Azure Login: [success / error message]
+  
+register-environment:
+  Status: [success / failure]
+  Azure Login: [success / error message]
+  
+run-pipeline:
+  Status: [success / failure]
+  Azure Login: [success / error message]
+
+================================================================================
+6. FEDERATED CREDENTIALS (From Azure Portal)
+================================================================================
+
+Copy federated credential details from Azure AD App Registration:
+
+App Registration Name: [name]
+Application (client) ID: [GUID]
+Directory (tenant) ID: [GUID]
+
+Federated Credential 1:
+  Name: [credential name]
+  Issuer: [https://token.actions.githubusercontent.com]
+  Subject: [repo:owner/repo:ref:refs/heads/main]
+  Audience: [api://AzureADTokenExchange]
+
+Federated Credential 2:
+  Name: [credential name]
+  Issuer: [https://token.actions.githubusercontent.com]
+  Subject: [repo:owner/repo:pull_request]
+  Audience: [api://AzureADTokenExchange]
+
+Federated Credential 3 (if exists):
+  Name: [credential name]
+  Issuer: [https://token.actions.githubusercontent.com]
+  Subject: [repo:owner/repo:ref:refs/pull/*]
+  Audience: [api://AzureADTokenExchange]
+
+================================================================================
+7. GITHUB SECRETS VERIFICATION
+================================================================================
+
+Secrets Configuration (from GitHub repository settings):
+
+AZURE_CLIENT_ID:
+  Present: [yes / no]
+  Location: [repository / organization]
+  Value matches App Registration: [yes / no]
+
+AZURE_TENANT_ID:
+  Present: [yes / no]
+  Location: [repository / organization]
+  Value matches Azure AD tenant: [yes / no]
+
+AZURE_SUBSCRIPTION_ID:
+  Present: [yes / no]
+  Location: [repository / organization]
+  Value is correct: [yes / no]
+
+================================================================================
+8. ADDITIONAL NOTES
+================================================================================
+
+Any other relevant observations:
+- [Note 1]
+- [Note 2]
+- [Note 3]
+
+================================================================================

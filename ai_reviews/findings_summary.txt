@@ -1,0 +1,6 @@
+Root cause: `azure/login@v1` plus `auth-type: IDENTITY` makes the action invoke the managed-identity CLI path (`az login --identity --username`), which Azure CLI 2.61+ now rejects, breaking OIDC login on GitHub runners.
+Affected files: `.github/workflows/custom-*.yml`, `.github/workflows/deploy-model-training-pipeline-classical.yml`, `github_workflows/azureml-pipeline.yml` where `auth-type: IDENTITY` and `uses: azure/login@v1` appear.
+Fix: Upgrade every invocation to `azure/login@v2` (or newer) and drop the `auth-type` override so the action performs workload identity federation automatically.
+Safety guard: If the input remains, mark it `required: true` with `default: SERVICE_PRINCIPAL` to keep callers aligned.
+Federated credentials: Confirm the App Registration for secret `AZURE_CLIENT_ID` includes subjects for `repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main` and `repo:kenderovemil/mlops-used-cars-lastproject3:pull_request`.
+Testing: Trigger `deploy-model-training-pipeline-classical.yml` via push and PR after the change; verify Azure Login logs show "Login using Workload Identity Federation" and that subsequent az commands succeed.

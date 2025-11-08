@@ -1,0 +1,77 @@
+GitHub Copilot Cross-Check – Azure Login Diagnostics
+====================================================
+
+Scope Review
+- Inspected every workflow invoking `azure/login@v1`: `deploy-model-training-pipeline-classical.yml`, `custom-create-compute.yml`, `custom-register-dataset.yml`, `custom-register-environment.yml`, `custom-run-pipeline.yml`, and legacy `github_workflows/azureml-pipeline.yml`.
+- Verified that each reusable workflow exposes an `auth-type` input and that the caller (`deploy-model-training-pipeline-classical.yml`) passes `IDENTITY`.
+
+Configuration Matrix
+
+| Workflow | Invocation | Auth Source | Permissions Present | Notes |
+|----------|------------|-------------|---------------------|-------|
+| deploy-model-training-pipeline-classical.yml | top-level | Literal `IDENTITY` | Global block (`id-token: write`) | Calls all reusable jobs |
+| custom-create-compute.yml | reusable | `${{ inputs.auth-type }}` | Job-level `permissions` defined | Runs Python SDK path |
+| custom-register-dataset.yml | reusable | `${{ inputs.auth-type }}` | Job-level `permissions` defined | Uses `az ml data` CLI |
+| custom-register-environment.yml | reusable | `${{ inputs.auth-type }}` | Job-level `permissions` defined | Adds ML extension before az calls |
+| custom-run-pipeline.yml | reusable | `${{ inputs.auth-type }}` | Job-level `permissions` defined | Submits Azure ML job |
+| github_workflows/azureml-pipeline.yml | standalone | Literal `IDENTITY` | Workflow-level `permissions` block | Direct azure/ML-action usage |
+
+Key Cross-Check Observations
+1. `azure/login@v1` is pinned everywhere; new CLI releases now reject `--identity --username`, so upgrade to `azure/login@v2` is required repository-wide.
+
+```41:46:.github/workflows/custom-run-pipeline.yml
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+```
+
+2. Reusable inputs declare `auth-type` without defaults. Recommend enforcing `required: true` plus `default: SERVICE_PRINCIPAL` (after upgrading to v2) or removing the input entirely so callers cannot drift.
+
+```18:30:.github/workflows/custom-create-compute.yml
+      inputs:
+        cluster_name:
+          required: true
+          type: string
+// ... existing code ...
+        auth-type:
+          required: false
+          type: string
+```
+
+3. Standalone workflow `github_workflows/azureml-pipeline.yml` hardcodes subscription/resource details inline; ensure the same Azure App Registration client ID powers its federated credential to avoid context mismatch.
+
+```21:36:github_workflows/azureml-pipeline.yml
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            auth-type: IDENTITY
+```
+
+Federated Subject / Issuer Matrix (expected)
+- issuer: `https://token.actions.githubusercontent.com`
+- audience: `api://AzureADTokenExchange`
+- subjects aligned with triggers:
+  - `repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main` – matches `push` to `main`
+  - `repo:kenderovemil/mlops-used-cars-lastproject3:pull_request` – covers PR workflows targeting `main`
+  - `repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/pull/*` – optional but recommended for future PR contexts
+  - Add environment-specific subjects if GitHub environments are introduced (none currently referenced)
+
+Proposed YAML Diff (minimal)
+- Bump every `azure/login` invocation to `@v2`.
+- Remove `auth-type` from the caller and reusable workflows; rely on the action's default OIDC detection.
+- If keeping `auth-type` for clarity, rename to `oidc-auth-type`, set `default: SERVICE_PRINCIPAL`, and pass that value explicitly after the upgrade.
+
+Proposed Python SDK Fallback
+- The scripts under `mlops/scripts/` already ingest `AZURE_SUBSCRIPTION_ID`, `RESOURCE_GROUP`, and `WORKSPACE_NAME`; once login succeeds, they can fully replace CLI usage for compute/dataset/environment/pipeline operations, eliminating the `az extension` dependency.
+
+Validation Checklist
+1. After the YAML adjustments, run `gh workflow run deploy-model-training-pipeline-classical.yml --ref main` (or push a branch) and confirm the Azure Login step reports "Login using Workload Identity Federation" in the log.
+2. Execute `az account show` in a follow-up step to verify the tenant/subscription match the expected values.
+3. Re-run from a pull request branch to confirm federated subject coverage.
+4. Archive the Azure Login log excerpt inside `ai_reviews/log_extracts/azure_login_debug.txt`.
+

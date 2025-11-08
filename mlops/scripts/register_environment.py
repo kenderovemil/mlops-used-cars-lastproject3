@@ -1,9 +1,7 @@
 from azure.identity import DefaultAzureCredential
-from azure.ai.ml import MLClient
-from azure.ai.ml.entities import AmlCompute
+from azure.ai.ml import MLClient, load_environment
 import os
 
-# Credentials via OIDC (GitHub Actions)
 credential = DefaultAzureCredential()
 
 subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
@@ -17,13 +15,9 @@ ml_client = MLClient(
     workspace_name=workspace_name
 )
 
-cpu_cluster = AmlCompute(
-    name="cpu-cluster",
-    size="Standard_DS11_v2",
-    min_instances=0,
-    max_instances=1,
-    tier="dedicated"
-)
+env_file = os.environ.get("ENV_FILE", "mlops/azureml/train/train-env.yml")
 
-ml_client.compute.begin_create_or_update(cpu_cluster).result()
-print("✅ Compute cluster created or updated successfully")
+# Load the environment from YAML file
+environment = load_environment(source=env_file)
+ml_client.environments.create_or_update(environment)
+print("✅ Environment registered successfully")

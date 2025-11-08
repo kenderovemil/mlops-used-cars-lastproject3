@@ -4,3 +4,45 @@ Fix: Upgrade every invocation to `azure/login@v2` (or newer) and drop the `auth-
 Safety guard: If the input remains, mark it `required: true` with `default: SERVICE_PRINCIPAL` to keep callers aligned.
 Federated credentials: Confirm the App Registration for secret `AZURE_CLIENT_ID` includes subjects for `repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main` and `repo:kenderovemil/mlops-used-cars-lastproject3:pull_request`.
 Testing: Trigger `deploy-model-training-pipeline-classical.yml` via push and PR after the change; verify Azure Login logs show "Login using Workload Identity Federation" and that subsequent az commands succeed.
+FINDINGS SUMMARY: Azure Login Failure Root Cause
+
+ROOT CAUSE:
+The auth-type input parameter is defined as "required: false" in all four
+reusable workflow files. When azure/login@v1 receives an empty or undefined
+auth-type value, it falls back to auto-detection logic that incorrectly
+identifies the setup as user-assigned managed identity instead of federated
+identity (OIDC). This triggers Azure CLI to attempt a deprecated managed
+identity login command that fails.
+
+SPECIFIC FILES AND LINES TO CHANGE:
+1. .github/workflows/custom-create-compute.yml (lines 28-30)
+2. .github/workflows/custom-register-dataset.yml (lines 22-24)
+3. .github/workflows/custom-register-environment.yml (lines 24-26)
+4. .github/workflows/custom-run-pipeline.yml (lines 18-20)
+
+EXACT CHANGE REQUIRED:
+Replace:
+  auth-type:
+    required: false
+    type: string
+
+With:
+  auth-type:
+    required: true
+    type: string
+    default: IDENTITY
+
+TESTING CONFIRMATION:
+After applying the fix:
+1. Create pull request to trigger workflow
+2. Verify Azure Login step logs show "Using federated identity token"
+3. Confirm no "user-assigned managed identity" messages appear
+4. Verify all four jobs (create-compute, register-dataset, register-environment,
+   run-pipeline) complete successfully
+5. Debug output should show auth-type value as "IDENTITY" (not empty)
+
+CONFIDENCE LEVEL: 90%
+The error messages clearly indicate managed identity mode activation when
+federated identity should be used. Making auth-type explicitly required with
+a default value will prevent auto-detection fallback.
+

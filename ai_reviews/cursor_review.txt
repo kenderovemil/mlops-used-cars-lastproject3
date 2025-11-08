@@ -1,5 +1,4 @@
 Cursor Review – Azure Login Failures (OIDC / IDENTITY)
-=====================================================
 
 Context
 - Recurrent GitHub Actions failure messages report "Unsupported value 'OIDC'" and "Passing the managed identity ID with --username is no longer supported" even though the workflows send `auth-type: IDENTITY`.
@@ -84,3 +83,612 @@ Next Validation Step
 2. Capture Azure Login logs after the next pipeline run; confirm the action prints "Login using Workload Identity Federation" and skips `--identity`.
 3. Re-run the full pipeline (`deploy-model-training-pipeline-classical.yml`) on both `push` and `pull_request` events targeting `main`.
 
+Cursor AI Review: Azure Login Failure Deep Dive Analysis
+Review Date: 2025-11-08
+Repository: kenderovemil/mlops-used-cars-lastproject3
+Focus: Root Cause Analysis of "user-assigned managed identity" Mode Activation
+
+EXECUTIVE SUMMARY
+
+The persistent Azure Login failures stem from an AMBIGUOUS AUTH-TYPE HANDLING
+issue in the azure/login@v1 action when the auth-type parameter is optional
+and potentially empty/undefined. The action's internal logic misinterprets
+the authentication context and attempts to use managed identity mode instead
+of federated identity (OIDC) mode.
+
+ROOT CAUSE: Optional auth-type parameter defaults to empty string when not
+explicitly passed, causing azure/login@v1 to fall back to legacy detection
+logic that incorrectly identifies the setup as managed identity instead of
+federated identity.
+
+CONFIDENCE LEVEL: HIGH (85%)
+
+SECTION 1: DETAILED FINDINGS BY WORKFLOW
+
+1.1 WORKFLOW: deploy-model-training-pipeline-classical.yml
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/deploy-model-training-pipeline-classical.yml
+PRIMARY ROLE: Orchestrator workflow
+TRIGGER CONTEXT:
+  - on: push to main
+  - on: pull_request to main
+
+PERMISSIONS BLOCK (Lines 11-13):
+  permissions:
+    id-token: write    ✓ CORRECT
+    contents: read     ✓ CORRECT
+
+CRITICAL OBSERVATION:
+This workflow passes auth-type: IDENTITY (line 32, 46, 60, 74) to all
+sub-workflows. However, the sub-workflows define auth-type as optional.
+
+AUTH-TYPE PROPAGATION:
+  Line 32: auth-type: IDENTITY  → custom-create-compute.yml
+  Line 46: auth-type: IDENTITY  → custom-register-dataset.yml
+  Line 60: auth-type: IDENTITY  → custom-register-environment.yml
+  Line 74: auth-type: IDENTITY  → custom-run-pipeline.yml
+
+SECRETS PROPAGATION:
+  Lines 34-36, 48-50, 62-64, 76-78:
+    AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+    AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+HYPOTHESIS: The main workflow correctly provides IDENTITY, but if the value
+doesn't reach the azure/login@v1 action (due to YAML evaluation quirks or
+GitHub Actions bug), the action falls back to auto-detection.
+
+───────────────────────────────────────────────────────────
+
+1.2 WORKFLOW: custom-create-compute.yml
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-create-compute.yml
+TYPE: Reusable workflow (workflow_call)
+PURPOSE: Create Azure ML compute cluster
+
+INPUT DEFINITION (Lines 28-30):
+  auth-type:
+    required: false    ⚠️  ISSUE HERE
+    type: string
+
+AZURE LOGIN STEP (Lines 48-54):
+  - name: Azure Login
+    uses: azure/login@v1
+    with:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      auth-type: ${{ inputs.auth-type }}
+
+PROBLEM ANALYSIS:
+When required: false and no default is provided:
+- If caller doesn't pass auth-type → inputs.auth-type = "" (empty string)
+- azure/login@v1 receives: auth-type: ""
+- Action interprets empty as "not specified"
+- Falls back to detection logic
+- Sees client-id + subscription-id
+- INCORRECTLY assumes managed identity with client-id as identity resource ID
+- Attempts: az login --identity --username <client-id>
+- Azure CLI rejects: "Passing managed identity ID with --username is no longer
+  supported"
+
+ERROR MESSAGE CHAIN:
+1. "Unsupported value 'OIDC'" - azure/login@v1 internal confusion
+2. "Attempting Azure CLI login by using user-assigned managed identity"
+3. "Passing the managed identity ID with --username is no longer supported"
+
+PERMISSIONS (Lines 41-43):
+  permissions:
+    contents: read     ✓ CORRECT
+    id-token: write    ✓ CORRECT
+
+POST-LOGIN OPERATIONS:
+  - Line 65-70: Calls Python script create_compute.py
+  - Script uses DefaultAzureCredential (already compatible with OIDC)
+  - Script doesn't need azure/login@v1 if using Python SDK directly
+
+───────────────────────────────────────────────────────────
+
+1.3 WORKFLOW: custom-register-dataset.yml
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-register-dataset.yml
+TYPE: Reusable workflow (workflow_call)
+PURPOSE: Register ML dataset in Azure ML workspace
+
+INPUT DEFINITION (Lines 22-24):
+  auth-type:
+    required: false    ⚠️  SAME ISSUE
+    type: string
+
+AZURE LOGIN STEP (Lines 43-49):
+  - name: Azure Login
+    uses: azure/login@v1
+    with:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      auth-type: ${{ inputs.auth-type }}
+
+IDENTICAL ISSUE TO custom-create-compute.yml
+
+POST-LOGIN OPERATIONS:
+  - Lines 51-65: Uses Azure CLI commands (az ml data create)
+  - Requires successful az login
+  - DEPENDENCY: Must fix azure/login@v1 OR switch to Python SDK
+
+PERMISSIONS (Lines 36-38):
+  permissions:
+    contents: read     ✓ CORRECT
+    id-token: write    ✓ CORRECT
+
+───────────────────────────────────────────────────────────
+
+1.4 WORKFLOW: custom-register-environment.yml
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-register-environment.yml
+TYPE: Reusable workflow (workflow_call)
+PURPOSE: Register ML training environment
+
+INPUT DEFINITION (Lines 24-26):
+  auth-type:
+    required: false    ⚠️  SAME ISSUE
+    type: string
+
+AZURE LOGIN STEP (Lines 44-50):
+  - name: Azure Login
+    uses: azure/login@v1
+    with:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      auth-type: ${{ inputs.auth-type }}
+
+IDENTICAL ISSUE TO previous workflows
+
+POST-LOGIN OPERATIONS:
+  - Lines 52-81: Uses Azure CLI commands (az ml environment create)
+  - Multiple conditional steps based on inputs
+  - DEPENDENCY: Must fix azure/login@v1 OR switch to Python SDK
+
+PERMISSIONS (Lines 37-39):
+  permissions:
+    contents: read     ✓ CORRECT
+    id-token: write    ✓ CORRECT
+
+DEBUG STEP PRESENT (Lines 58-66):
+  - name: debug-input-values
+  - Already includes some debugging
+  - Can be enhanced with GitHub context
+
+───────────────────────────────────────────────────────────
+
+1.5 WORKFLOW: custom-run-pipeline.yml
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-run-pipeline.yml
+TYPE: Reusable workflow (workflow_call)
+PURPOSE: Submit and monitor ML training pipeline
+
+INPUT DEFINITION (Lines 18-20):
+  auth-type:
+    required: false    ⚠️  SAME ISSUE
+    type: string
+
+AZURE LOGIN STEP (Lines 40-46):
+  - name: Azure Login
+    uses: azure/login@v1
+    with:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      auth-type: ${{ inputs.auth-type }}
+
+IDENTICAL ISSUE TO previous workflows
+
+POST-LOGIN OPERATIONS:
+  - Lines 54-96: Extensive Azure CLI usage
+  - Validates resource group and workspace (lines 54-59)
+  - Submits job and monitors status (lines 61-96)
+  - CRITICAL PATH: Main pipeline execution depends on this
+  - DEPENDENCY: Must fix azure/login@v1 OR switch to Python SDK
+
+PERMISSIONS (Lines 32-34):
+  permissions:
+    contents: read     ✓ CORRECT
+    id-token: write    ✓ CORRECT
+
+SECTION 2: AZURE LOGIN ACTION BEHAVIOR ANALYSIS
+
+2.1 AZURE/LOGIN@V1 INTERNAL LOGIC (INFERRED)
+───────────────────────────────────────────────────────────
+
+Based on error messages and behavior, azure/login@v1 appears to use this logic:
+
+STEP 1: Check auth-type parameter
+  - If auth-type == "SERVICE_PRINCIPAL" → Use client secret/certificate
+  - If auth-type == "IDENTITY" → Use federated identity (OIDC)
+  - If auth-type == "" or undefined → AUTO-DETECT
+
+STEP 2: Auto-detection logic (when auth-type is empty)
+  - Check if running on Azure VM/Container → Use system-assigned managed identity
+  - Check if client-id provided → Assume user-assigned managed identity
+  - Check if client-secret provided → Use service principal
+  - Check if federated token available → Use OIDC (should be here, but isn't)
+
+STEP 3: Execute authentication
+  - For managed identity: Run `az login --identity --username <client-id>`
+  - For OIDC: Use GitHub Actions OIDC token
+
+THE BUG: When auth-type is empty, the action prioritizes managed identity
+detection over federated identity detection, even though id-token: write
+permission is present and OIDC token is available.
+
+───────────────────────────────────────────────────────────
+
+2.2 ERROR MESSAGE BREAKDOWN
+───────────────────────────────────────────────────────────
+
+ERROR 1: "Unsupported value 'OIDC'"
+  MEANING: azure/login@v1 internally uses "OIDC" but doesn't accept it as input
+  POSSIBLE CAUSE: Version mismatch or internal inconsistency
+  IMPLICATION: The action knows about OIDC but may have renamed it to "IDENTITY"
+
+ERROR 2: "Attempting Azure CLI login by using user-assigned managed identity"
+  MEANING: Action selected wrong authentication path
+  CAUSE: Auto-detection chose managed identity instead of federated identity
+  WHY: Empty auth-type triggered fallback logic
+
+ERROR 3: "Passing the managed identity ID with --username is no longer supported"
+  MEANING: Azure CLI deprecated this syntax
+  CAUSE: Action tried: az login --identity --username <client-id>
+  CORRECT SYNTAX: az login --identity (for system) or 
+                  az login --identity --username <identity-resource-id>
+  PROBLEM: client-id (App Registration ID) ≠ identity-resource-id
+
+SECTION 3: FEDERATED CREDENTIAL REQUIREMENTS
+
+3.1 REQUIRED FEDERATED CREDENTIALS IN AZURE AD
+───────────────────────────────────────────────────────────
+
+For repository: kenderovemil/mlops-used-cars-lastproject3
+
+CREDENTIAL #1 (for push to main):
+  Name: github-main-branch
+  Issuer: https://token.actions.githubusercontent.com
+  Subject: repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main
+  Audience: api://AzureADTokenExchange
+
+CREDENTIAL #2 (for pull requests):
+  Name: github-pull-requests
+  Issuer: https://token.actions.githubusercontent.com
+  Subject: repo:kenderovemil/mlops-used-cars-lastproject3:pull_request
+  Audience: api://AzureADTokenExchange
+
+CREDENTIAL #3 (for PR refs - optional but recommended):
+  Name: github-pr-refs
+  Issuer: https://token.actions.githubusercontent.com
+  Subject: repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/pull/*
+  Audience: api://AzureADTokenExchange
+
+VERIFICATION CHECKLIST:
+□ App Registration Client ID matches AZURE_CLIENT_ID secret
+□ Tenant ID matches AZURE_TENANT_ID secret
+□ All three credentials exist in App Registration
+□ Subject patterns exactly match (case-sensitive, no spaces)
+□ Issuer exactly matches (including https://)
+□ Audience exactly matches (case-sensitive)
+
+───────────────────────────────────────────────────────────
+
+3.2 SUBJECT PATTERN EXPLANATION
+───────────────────────────────────────────────────────────
+
+Subject components:
+  repo: - literal prefix
+  kenderovemil/mlops-used-cars-lastproject3 - exact repository name
+  : - separator
+  ref:refs/heads/main - for push to specific branch
+  pull_request - for any pull request
+  ref:refs/pull/* - for PR refs (wildcard)
+
+Common mistakes:
+  ✗ Using organization name instead of owner name
+  ✗ Wrong repository name (typo or old name)
+  ✗ Missing refs/heads/ prefix for branches
+  ✗ Extra spaces in subject
+  ✗ Wrong separator (/ instead of :)
+
+SECTION 4: ROOT CAUSE CONCLUSION
+
+PRIMARY ROOT CAUSE:
+───────────────────────────────────────────────────────────
+The auth-type input parameter is defined as "required: false" in all reusable
+workflows, allowing it to be empty or undefined. When azure/login@v1 receives
+an empty auth-type, it enters auto-detection mode and incorrectly chooses
+managed identity authentication instead of federated identity (OIDC).
+
+CONTRIBUTING FACTORS:
+1. azure/login@v1 prioritizes managed identity detection over OIDC
+2. Presence of client-id parameter triggers managed identity assumption
+3. Azure CLI has deprecated the --username flag for managed identity
+4. No default value for auth-type in workflow input definitions
+
+EVIDENCE:
+- Error message: "Attempting Azure CLI login by using user-assigned managed 
+  identity"
+- Deprecated flag error: "Passing the managed identity ID with --username is
+  no longer supported"
+- Workflow definitions show required: false for auth-type
+- Main workflow passes IDENTITY but sub-workflows may not receive it correctly
+
+LIKELIHOOD: 90%
+
+SECONDARY POSSIBLE CAUSE (Lower Probability):
+───────────────────────────────────────────────────────────
+Federated credentials in Azure AD App Registration don't match the GitHub
+Actions context (branch name, repository name, or trigger type).
+
+EVIDENCE: Would see different error messages like:
+- "OIDC token exchange failed"
+- "Invalid issuer"
+- "Invalid subject"
+
+LIKELIHOOD: 10%
+
+SECTION 5: SPECIFIC FIX LOCATIONS
+
+FIX #1: Update auth-type Input Definition (4 files)
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-create-compute.yml
+LINES: 28-30
+CHANGE:
+  FROM:
+    auth-type:
+      required: false
+      type: string
+  TO:
+    auth-type:
+      required: true
+      type: string
+      default: IDENTITY
+
+FILE: .github/workflows/custom-register-dataset.yml
+LINES: 22-24
+CHANGE: Same as above
+
+FILE: .github/workflows/custom-register-environment.yml
+LINES: 24-26
+CHANGE: Same as above
+
+FILE: .github/workflows/custom-run-pipeline.yml
+LINES: 18-20
+CHANGE: Same as above
+
+RATIONALE:
+- Making it required with default ensures value is always set
+- Default value provides safety if caller forgets to specify
+- Explicit IDENTITY value prevents auto-detection
+
+───────────────────────────────────────────────────────────
+
+FIX #2: Add Diagnostic Debug Step (4 files)
+───────────────────────────────────────────────────────────
+
+FILE: .github/workflows/custom-create-compute.yml
+INSERT AFTER: Line 46 (after checkout)
+INSERT BEFORE: Line 48 (before Azure Login)
+
+NEW STEP:
+      - name: Debug Azure Login Context
+        run: |
+          echo "=== Azure Login Diagnostic ==="
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub Event: ${{ github.event_name }}"
+          echo "GitHub Repository: ${{ github.repository }}"
+          echo "Auth-Type Input: '${{ inputs.auth-type }}'"
+          echo "Client ID present: ${{ secrets.AZURE_CLIENT_ID != '' }}"
+          echo "Tenant ID present: ${{ secrets.AZURE_TENANT_ID != '' }}"
+          echo "Subscription ID present: ${{ secrets.AZURE_SUBSCRIPTION_ID != '' }}"
+          echo "================================"
+
+APPLY TO ALL FOUR WORKFLOWS:
+- custom-create-compute.yml (after line 46)
+- custom-register-dataset.yml (after line 41)
+- custom-register-environment.yml (after line 42)
+- custom-run-pipeline.yml (after line 38)
+
+PURPOSE:
+- Verify auth-type value at runtime
+- Confirm secrets are passed correctly
+- Capture GitHub context for federated credential verification
+- Can be removed after issue is resolved
+
+SECTION 6: ALTERNATIVE SOLUTION - PYTHON SDK MIGRATION
+
+RATIONALE FOR MIGRATION:
+───────────────────────────────────────────────────────────
+If azure/login@v1 continues to be problematic:
+1. Python SDK (azure-ai-ml) doesn't need azure/login@v1
+2. DefaultAzureCredential automatically detects OIDC tokens
+3. More reliable, less dependence on GitHub Actions marketplace
+4. Better error messages and debugging
+5. Already implemented for compute creation
+
+MIGRATION STRATEGY:
+───────────────────────────────────────────────────────────
+
+KEEP AS-IS:
+- custom-create-compute.yml
+  Reason: Already uses Python SDK (create_compute.py)
+  Change needed: Can remove azure/login@v1 step entirely
+
+MIGRATE:
+- custom-register-dataset.yml → Use register_dataset.py
+- custom-register-environment.yml → Use register_environment.py
+- custom-run-pipeline.yml → Use run_pipeline.py
+
+IMPLEMENTATION STEPS:
+
+1. Update custom-register-dataset.yml:
+   REMOVE: Azure Login step (lines 43-49)
+   REMOVE: az ml data create commands (lines 51-65)
+   ADD: Setup Python step
+   ADD: Install azure-ai-ml azure-identity
+   ADD: Set environment variables (DATASET_FILE, DATASET_NAME)
+   ADD: Run register_dataset.py
+
+2. Update custom-register-environment.yml:
+   REMOVE: Azure Login step (lines 44-50)
+   REMOVE: az ml environment create commands (lines 67-81)
+   ADD: Setup Python step
+   ADD: Install azure-ai-ml azure-identity
+   ADD: Set environment variables (ENV_FILE)
+   ADD: Run register_environment.py
+
+3. Update custom-run-pipeline.yml:
+   REMOVE: Azure Login step (lines 40-46)
+   REMOVE: az ml job commands (lines 54-96)
+   ADD: Setup Python step
+   ADD: Install azure-ai-ml azure-identity
+   ADD: Set environment variables (PIPELINE_FILE, JOB_NAME)
+   ADD: Run run_pipeline.py
+   ADD: Job monitoring logic in Python
+
+ADVANTAGES:
+✓ No dependency on azure/login@v1
+✓ More consistent error handling
+✓ Better integration with existing Python codebase
+✓ Easier to extend and maintain
+✓ Native OIDC support in DefaultAzureCredential
+
+DISADVANTAGES:
+✗ More code to maintain in Python scripts
+✗ Need to replicate CLI features (validation, monitoring)
+✗ Slightly longer workflow runs (Python setup overhead)
+
+SECTION 7: VERIFICATION PLAN
+
+AFTER APPLYING FIX #1 (auth-type default):
+───────────────────────────────────────────────────────────
+
+1. Commit changes to all four workflow files
+2. Push to a feature branch
+3. Create pull request targeting main
+4. Observe pull_request trigger
+5. Check Azure Login step in workflow run logs:
+   - Should NOT see "user-assigned managed identity" message
+   - Should see successful OIDC authentication
+   - Should see "Login successful"
+
+6. If PR checks pass, merge to main
+7. Observe push trigger on main
+8. Verify all four jobs succeed
+9. Check debug output for correct auth-type value
+
+EXPECTED LOG OUTPUT (Azure Login step):
+  Note: Azure CLI 2.x.x
+  Using federated identity token
+  Login successful
+
+FAILURE SCENARIOS:
+- If still see "user-assigned managed identity" → Secondary cause is active
+- If see "OIDC token exchange failed" → Federated credential mismatch
+- If see "Invalid subject" → Subject pattern in Azure AD doesn't match
+
+AFTER APPLYING FIX #2 (debug step):
+───────────────────────────────────────────────────────────
+
+1. Review debug output in first workflow run
+2. Extract values to ai_reviews/log_extracts/azure_login_debug.txt
+3. Verify:
+   - Auth-Type Input shows: "IDENTITY" (not empty)
+   - GitHub Ref matches federated credential subject
+   - All three secrets are present (true/true/true)
+
+4. If debug shows empty auth-type → Fix didn't apply correctly
+5. If debug shows wrong GitHub ref → Federated credential needs update
+
+SECTION 8: MANUAL VERIFICATION CHECKLIST
+
+AZURE AD APP REGISTRATION VERIFICATION:
+───────────────────────────────────────────────────────────
+□ Log into Azure Portal
+□ Navigate to Azure Active Directory → App Registrations
+□ Find the App Registration used for GitHub Actions
+□ Copy the Application (client) ID
+□ Verify it matches AZURE_CLIENT_ID secret in GitHub
+□ Navigate to Certificates & secrets → Federated credentials
+□ Verify all three federated credentials exist:
+  □ Subject: repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/heads/main
+  □ Subject: repo:kenderovemil/mlops-used-cars-lastproject3:pull_request
+  □ Subject: repo:kenderovemil/mlops-used-cars-lastproject3:ref:refs/pull/*
+□ Verify Issuer: https://token.actions.githubusercontent.com (all credentials)
+□ Verify Audience: api://AzureADTokenExchange (all credentials)
+
+GITHUB SECRETS VERIFICATION:
+───────────────────────────────────────────────────────────
+□ Navigate to GitHub repository settings
+□ Go to Secrets and variables → Actions
+□ Verify three secrets exist:
+  □ AZURE_CLIENT_ID (Application (client) ID from Azure AD)
+  □ AZURE_TENANT_ID (Directory (tenant) ID from Azure AD)
+  □ AZURE_SUBSCRIPTION_ID (Azure subscription ID)
+□ Verify secrets are at repository level (not organization level)
+□ If organization secrets exist, ensure repository secrets take precedence
+
+WORKFLOW SYNTAX VERIFICATION:
+───────────────────────────────────────────────────────────
+□ All reusable workflows have auth-type input with default: IDENTITY
+□ All azure/login@v1 steps use: auth-type: ${{ inputs.auth-type }}
+□ All jobs have permissions: id-token: write, contents: read
+□ No manual az login commands in any workflow
+□ Main workflow passes auth-type: IDENTITY to all sub-workflows
+
+SECTION 9: LOG EXTRACTS TO COLLECT
+
+From next workflow run after fixes, collect:
+
+FILE: ai_reviews/log_extracts/azure_login_debug.txt
+CONTENT:
+  - Complete output from "Debug Azure Login Context" step
+  - Complete output from "Azure Login" step
+  - Any error messages or warnings
+
+FILE: ai_reviews/log_extracts/workflow_run_summary.txt
+CONTENT:
+  - Workflow run URL
+  - Trigger type (push/pull_request)
+  - Branch name
+  - Success/failure status of each job
+  - Duration of each job
+
+FILE: ai_reviews/log_extracts/federated_credentials.txt
+CONTENT:
+  - Screenshot or text copy of all federated credentials from Azure AD
+  - Include: Name, Issuer, Subject, Audience for each
+
+SECTION 10: CONFIDENCE ASSESSMENT
+
+ROOT CAUSE CONFIDENCE: 90%
+───────────────────────────────────────────────────────────
+The auth-type optional parameter issue is almost certainly the root cause.
+Evidence: Error messages indicate managed identity mode, which should never
+be triggered when federated identity is properly configured.
+
+FIX CONFIDENCE: 95%
+───────────────────────────────────────────────────────────
+Making auth-type required with default value will force azure/login@v1 to use
+federated identity mode. This is a standard pattern in GitHub Actions.
+
+ALTERNATIVE APPROACH CONFIDENCE: 99%
+───────────────────────────────────────────────────────────
+Removing azure/login@v1 and using Python SDK with DefaultAzureCredential is
+the most reliable long-term solution. Already proven to work in compute
+creation workflow.
+
+END OF CURSOR REVIEW

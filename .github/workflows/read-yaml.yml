@@ -6,6 +6,7 @@ on:
       file_name:
         required: true
         type: string
+        default: mlops/azureml/train/config-infra-prod.yml
     outputs:
       resource_group:
         description: "Resource group name"
@@ -21,9 +22,16 @@ jobs:
       resource_group: ${{ steps.extract.outputs.resource_group }}
       aml_workspace: ${{ steps.extract.outputs.aml_workspace }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq
+      
       - id: extract
         run: |
+          set -euo pipefail
           content=$(cat ${{ inputs.file_name }})
           echo "resource_group=$(echo \"$content\" | yq '.resource_group')" >> $GITHUB_OUTPUT
           echo "aml_workspace=$(echo \"$content\" | yq '.aml_workspace')" >> $GITHUB_OUTPUT

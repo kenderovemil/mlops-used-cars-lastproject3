@@ -25,10 +25,6 @@ on:
       cluster_tier:
         required: false
         type: string
-      auth-type:
-        required: true
-        type: string
-        default: IDENTITY
     secrets:
       AZURE_CLIENT_ID:
         required: true
@@ -44,7 +40,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Debug Azure Login Context
         run: |
@@ -52,22 +48,20 @@ jobs:
           echo "GitHub Ref: ${{ github.ref }}"
           echo "GitHub Event: ${{ github.event_name }}"
           echo "GitHub Repository: ${{ github.repository }}"
-          echo "Auth-Type Input: '${{ inputs.auth-type }}'"
           echo "Client ID present: ${{ secrets.AZURE_CLIENT_ID != '' }}"
           echo "Tenant ID present: ${{ secrets.AZURE_TENANT_ID != '' }}"
           echo "Subscription ID present: ${{ secrets.AZURE_SUBSCRIPTION_ID != '' }}"
           echo "================================"
         
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: ${{ inputs.auth-type }}
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           

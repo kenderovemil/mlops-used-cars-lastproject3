@@ -1,0 +1,82 @@
+================================================================================
+TOKEN USAGE REPORT
+Repository: kenderovemil/mlops-used-cars-lastproject3
+Generated: 2025-11-08
+================================================================================
+
+SEARCH SCOPE:
+- Searched all files in the repository (excluding .git directory)
+- Searched for: GH_TOKEN, secrets.GITHUB_TOKEN, secrets.GH_TOKEN, and variations
+- File types examined: .yml, .yaml, .py, .sh, .json, .md, .txt, and all other text files
+
+================================================================================
+FINDINGS:
+================================================================================
+
+Total files found containing token references: 2
+
+--------------------------------------------------------------------------------
+1. COPILOT_GUIDE.md
+--------------------------------------------------------------------------------
+Location: ./COPILOT_GUIDE.md
+Line: 99
+Token Reference: GH_TOKEN
+
+Context:
+  - `AZURE_TENANT_ID` - Azure tenant ID
+  - `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
+  - `GH_TOKEN` - GitHub personal access token (optional)
+  - `MLFLOW_TRACKING_URI` - MLflow server URI (optional)
+  - `MLFLOW_API_TOKEN` - MLflow API token (optional)
+
+Usage Type: Documentation
+Purpose: Documenting that GH_TOKEN is an optional GitHub personal access token
+         secret that should be configured in the repository settings.
+
+--------------------------------------------------------------------------------
+2. mlops/docs/SECRETS_SETUP.md
+--------------------------------------------------------------------------------
+Location: ./mlops/docs/SECRETS_SETUP.md
+Line: 6
+Token Reference: GH_TOKEN
+
+Context:
+🧩 Required GitHub Secrets
+Name	Type	Used by	Description
+GH_TOKEN	String	Copilot	Personal GitHub token for API access and push/pull
+AZURE_CREDENTIALS	JSON	Copilot	Service Principal for authentication to Azure
+MLFLOW_TRACKING_URI	URI	Cursor	(optional) URI to MLflow server
+
+Usage Type: Documentation
+Purpose: Documents that GH_TOKEN is a required GitHub Secret used by Copilot
+         for API access and push/pull operations.
+
+================================================================================
+SUMMARY:
+================================================================================
+
+- No actual usage of GH_TOKEN or secrets.GITHUB_TOKEN found in workflow files
+  (.github/workflows/*.yml)
+- No usage found in Python scripts (.py files)
+- No usage found in shell scripts (.sh files)
+- No usage found in configuration files (.json, .yaml, .yml files)
+
+All references found are in DOCUMENTATION files only:
+  1. COPILOT_GUIDE.md - Documents GH_TOKEN as optional secret
+  2. mlops/docs/SECRETS_SETUP.md - Documents GH_TOKEN as required secret for Copilot
+
+CONCLUSION:
+The token GH_TOKEN is documented as a GitHub Secret that should be configured
+in the repository settings, but it is NOT actively used in any workflow files,
+scripts, or code within this repository at the time of this analysis.
+
+The documentation indicates it's intended for:
+- GitHub Copilot API access
+- Push/pull operations
+- Personal GitHub token authentication
+
+However, no actual implementation using these tokens was found in the codebase.
+
+================================================================================
+END OF REPORT
+================================================================================

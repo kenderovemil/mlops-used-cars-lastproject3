@@ -51,6 +51,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set environment variables
+        run: |
+          echo "AZURE_SUBSCRIPTION_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_SECRET=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+
       - name: Update Azure CLI
         run: |
           sudo az upgrade --yes

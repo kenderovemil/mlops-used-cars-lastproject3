@@ -16,11 +16,7 @@ on:
         required: true
         type: string
     secrets:
-      AZURE_CLIENT_ID:
-        required: true
-      AZURE_TENANT_ID:
-        required: true
-      AZURE_SUBSCRIPTION_ID:
+      AZURE_CREDENTIALS:
         required: true
 
 jobs:
@@ -28,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - name: Checkout repository
@@ -40,17 +35,13 @@ jobs:
           echo "GitHub Ref: ${{ github.ref }}"
           echo "GitHub Event: ${{ github.event_name }}"
           echo "GitHub Repository: ${{ github.repository }}"
-          echo "Client ID present: ${{ secrets.AZURE_CLIENT_ID != '' }}"
-          echo "Tenant ID present: ${{ secrets.AZURE_TENANT_ID != '' }}"
-          echo "Subscription ID present: ${{ secrets.AZURE_SUBSCRIPTION_ID != '' }}"
+          echo "Credentials present: ${{ secrets.AZURE_CREDENTIALS != '' }}"
           echo "================================"
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Update Azure CLI
         run: |

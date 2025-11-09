@@ -1,16 +1,18 @@
-$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
-type: command
+name: AML Command Job
 
-command: >-
-  python train.py --data ${{inputs.training_data}} --lr 0.01
+on:
+  workflow_dispatch:
 
-environment: azureml:train-env:3
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-inputs:
-  training_data:
-    type: uri_file
-    path: azureml:skycore_input_data_awakening:1
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-compute: azureml:lastprojectcompute
-experiment_name: project_III_MLOPS
-description: "Training job for SkyCore"
+      - name: Submit AML job
+        run: az ml job create --file .github/jobs/command_job.yml

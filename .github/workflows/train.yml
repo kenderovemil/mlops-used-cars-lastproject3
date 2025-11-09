@@ -19,7 +19,7 @@ jobs:
           {
             "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
             "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
-            "WORKSPACE_NAME": "project_iii_mlops",
+            "WORKSPACE_NAME": "project_III_MLOPS",
             "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
             "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
             "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
@@ -31,6 +31,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set RG and WS
+        run: |
+          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
+
       - name: Set storage key
         run: |
           echo "AZURE_STORAGE_KEY=${{ secrets.AZURE_STORAGE_KEY }}" >> $GITHUB_ENV
@@ -39,6 +44,6 @@ jobs:
         run: |
           az ml job create \
             --file mlops/azureml/train/command_job.yml \
-            --resource-group streaming_autovehicle_pricing_MLOPS \
-            --workspace-name project_iii_mlops
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --workspace-name ${{ env.WORKSPACE_NAME }}
 

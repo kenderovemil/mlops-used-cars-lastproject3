@@ -35,8 +35,8 @@ jobs:
           cat > mlops/config/azure_credentials.json << 'EOF'
           {
             "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
-            "RESOURCE_GROUP": "${{ inputs.resource_group }}",
-            "WORKSPACE_NAME": "${{ inputs.workspace_name }}",
+            "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
+            "WORKSPACE_NAME": "project_III_MLOPS",
             "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
             "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
             "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
@@ -59,8 +59,8 @@ jobs:
 
       - name: Set RG and WS
         run: |
-          echo "RESOURCE_GROUP=${{ inputs.resource_group }}" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=${{ inputs.workspace_name }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |
@@ -75,18 +75,18 @@ jobs:
 
       - name: Validate resource group and workspace
         run: |
-          echo "Using resource group: ${{ inputs.resource_group }}"
-          echo "Using workspace: ${{ inputs.workspace_name }}"
-          az group show --name ${{ inputs.resource_group }} || { echo "❌ Resource group not found"; exit 1; }
-          az ml workspace show --name ${{ inputs.workspace_name }} --resource-group ${{ inputs.resource_group }} || { echo "❌ Workspace not found"; exit 2; }
+          echo "Using resource group: ${{ env.RESOURCE_GROUP }}"
+          echo "Using workspace: ${{ env.WORKSPACE_NAME }}"
+          az group show --name ${{ env.RESOURCE_GROUP }} || { echo "❌ Resource group not found"; exit 1; }
+          az ml workspace show --name ${{ env.WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} || { echo "❌ Workspace not found"; exit 2; }
 
       - name: Run ML pipeline
         run: |
           echo "🔧 Submitting pipeline from file: ${{ inputs.parameters-file }}"
           run_id=$(az ml job create \
             --file ${{ github.workspace }}/${{ inputs.parameters-file }} \
-            --resource-group ${{ inputs.resource_group }} \
-            --workspace-name ${{ inputs.workspace_name }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --workspace-name ${{ env.WORKSPACE_NAME }} \
             --query name -o tsv)
 
           if [[ -z "$run_id" ]]; then
@@ -95,9 +95,9 @@ jobs:
           fi
 
           echo "🚀 Job submitted: $run_id"
-          az ml job show -n "$run_id" --resource-group ${{ inputs.resource_group }} --workspace-name ${{ inputs.workspace_name }} --web
+          az ml job show -n "$run_id" --resource-group ${{ env.RESOURCE_GROUP }} --workspace-name ${{ env.WORKSPACE_NAME }} --web
 
-          status=$(az ml job show -n "$run_id" --resource-group ${{ inputs.resource_group }} --workspace-name ${{ inputs.workspace_name }} --query status -o tsv)
+          status=$(az ml job show -n "$run_id" --resource-group ${{ env.RESOURCE_GROUP }} --workspace-name ${{ env.WORKSPACE_NAME }} --query status -o tsv)
 
           if [[ -z "$status" ]]; then
             echo "❌ Status query failed"
@@ -108,7 +108,7 @@ jobs:
           while [[ ${running[*]} =~ $status ]]; do
             echo "⏳ Status: $status"
             sleep 15
-            status=$(az ml job show -n "$run_id" --resource-group ${{ inputs.resource_group }} --workspace-name ${{ inputs.workspace_name }} --query status -o tsv)
+            status=$(az ml job show -n "$run_id" --resource-group ${{ env.RESOURCE_GROUP }} --workspace-name ${{ env.WORKSPACE_NAME }} --query status -o tsv)
           done
 
           echo "✅ Final status: $status"

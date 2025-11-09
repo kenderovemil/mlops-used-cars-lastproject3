@@ -39,8 +39,8 @@ jobs:
           cat > mlops/config/azure_credentials.json << 'EOF'
           {
             "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
-            "RESOURCE_GROUP": "${{ inputs.resource_group }}",
-            "WORKSPACE_NAME": "${{ inputs.workspace_name }}",
+            "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
+            "WORKSPACE_NAME": "project_III_MLOPS",
             "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
             "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
             "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
@@ -63,8 +63,8 @@ jobs:
 
       - name: Set RG and WS
         run: |
-          echo "RESOURCE_GROUP=${{ inputs.resource_group }}" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=${{ inputs.workspace_name }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |
@@ -89,15 +89,15 @@ jobs:
       - name: create-environment-from-file-with-conda
         if: ${{ inputs.conda_file != ''}}
         run: |
-          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ inputs.resource_group }} \
-                                --workspace-name ${{ inputs.workspace_name }} --conda-file ${{ github.workspace }}/${{ inputs.conda_file }}
+          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ env.RESOURCE_GROUP }} \
+                                --workspace-name ${{ env.WORKSPACE_NAME }} --conda-file ${{ github.workspace }}/${{ inputs.conda_file }}
       - name: create-environment-from-file-without-conda
         if: ${{ !inputs.conda_file}}
         run: |
-          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ inputs.resource_group }} \
-                                  --workspace-name ${{ inputs.workspace_name }}
+          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ env.RESOURCE_GROUP }} \
+                                  --workspace-name ${{ env.WORKSPACE_NAME }}
       - name: create-environment-from-image
         if: ${{ inputs.dockerfile-location != ''}}
         run: |
-          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ inputs.resource_group }} \
-                                  --workspace-name ${{ inputs.workspace_name }} --build-context ${{ github.workspace }}/${{ inputs.dockerfile-location }}
+          az ml environment create --file ${{ github.workspace }}/${{ inputs.environment_file }} --resource-group ${{ env.RESOURCE_GROUP }} \
+                                  --workspace-name ${{ env.WORKSPACE_NAME }} --build-context ${{ github.workspace }}/${{ inputs.dockerfile-location }}

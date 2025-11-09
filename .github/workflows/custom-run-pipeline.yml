@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
+      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
 
     steps:
       - name: Checkout repository
@@ -68,6 +71,12 @@ jobs:
         run: |
           echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
           echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
+
+      - name: Set storage key
+        run: |
+          STORAGE_KEY="${{ secrets.AZURE_STORAGE_KEY }}"
+          echo "::add-mask::$STORAGE_KEY"
+          echo "AZURE_STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |

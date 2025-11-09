@@ -58,6 +58,11 @@ jobs:
           echo "AZURE_CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
           echo "AZURE_CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
+      - name: Set RG and WS
+        run: |
+          echo "RESOURCE_GROUP=${{ inputs.resource_group }}" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=${{ inputs.workspace_name }}" >> $GITHUB_ENV
+
       - name: Update Azure CLI
         run: |
           sudo az upgrade --yes

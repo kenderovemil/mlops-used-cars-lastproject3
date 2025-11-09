@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
+      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -45,7 +48,9 @@ jobs:
 
       - name: Set storage key
         run: |
-          echo "AZURE_STORAGE_KEY=${{ secrets.AZURE_STORAGE_KEY }}" >> $GITHUB_ENV
+          STORAGE_KEY="${{ secrets.AZURE_STORAGE_KEY }}"
+          echo "::add-mask::$STORAGE_KEY"
+          echo "AZURE_STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_ENV
 
       - name: Submit AML job
         run: |

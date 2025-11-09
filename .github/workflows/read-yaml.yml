@@ -15,35 +15,27 @@ on:
         description: "AML workspace name"
         value: ${{ jobs.read-yaml.outputs.aml_workspace }}
     secrets:
-      AZURE_CLIENT_ID:
-        required: true
-      AZURE_TENANT_ID:
-        required: true
-      AZURE_SUBSCRIPTION_ID:
+      AZURE_CREDENTIALS:
         required: true
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   read-yaml:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     outputs:
       resource_group: ${{ steps.extract.outputs.resource_group }}
       aml_workspace: ${{ steps.extract.outputs.aml_workspace }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v2
+      - name: Azure login
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Update Azure CLI
         run: |

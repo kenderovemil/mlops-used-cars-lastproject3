@@ -62,8 +62,8 @@ jobs:
 
       - name: Set RG and WS
         run: |
-          echo "RESOURCE_GROUP=${{ inputs.resource_group }}" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=${{ inputs.workspace_name }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |
@@ -78,10 +78,10 @@ jobs:
       - name: create-dataset-from-file
         if: ${{ inputs.file_type == ''}}
         run: |
-          az ml data create --file ${{ github.workspace }}/${{ inputs.data_file }} --resource-group ${{ inputs.resource_group }} \
-          --workspace-name ${{ inputs.workspace_name }} --name ${{ inputs.name }}
+          az ml data create --file ${{ github.workspace }}/${{ inputs.data_file }} --resource-group ${{ env.RESOURCE_GROUP }} \
+          --workspace-name ${{ env.WORKSPACE_NAME }} --name ${{ inputs.name }}
       - name: create-dataset-as-job
         if: ${{ inputs.file_type != ''}}
         run: |
-          az ml job create --file ${{ github.workspace }}/${{ inputs.data_file }} --resource-group ${{ inputs.resource_group }} \
-                --workspace-name ${{ inputs.workspace_name }}
+          az ml job create --file ${{ github.workspace }}/${{ inputs.data_file }} --resource-group ${{ env.RESOURCE_GROUP }} \
+                --workspace-name ${{ env.WORKSPACE_NAME }}

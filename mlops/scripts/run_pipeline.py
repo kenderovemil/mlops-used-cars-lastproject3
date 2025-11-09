@@ -3,11 +3,7 @@ from azure.ai.ml import MLClient, load_job
 from azure.core.exceptions import AzureError
 import os
 import sys
-from pathlib import Path
-
-# Add parent directory to path to import config module
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from mlops.config import load_credentials
+from utils import load_credentials
 
 # Load credentials from JSON file
 load_credentials()

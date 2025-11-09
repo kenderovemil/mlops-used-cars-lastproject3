@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+env:
+  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
+  WORKSPACE_NAME: project_III_MLOPS
+
 permissions:
   contents: read
 
@@ -16,9 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
-      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -62,9 +63,6 @@ jobs:
 
   check-azure-cli:
     runs-on: ubuntu-latest
-    env:
-      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
-      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

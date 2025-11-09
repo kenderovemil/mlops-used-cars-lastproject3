@@ -18,6 +18,10 @@ on:
       AZURE_CREDENTIALS:
         required: true
 
+env:
+  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
+  WORKSPACE_NAME: project_III_MLOPS
+
 permissions:
   contents: read
 
@@ -26,9 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
-      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     outputs:
       resource_group: ${{ steps.extract.outputs.resource_group }}
       aml_workspace: ${{ steps.extract.outputs.aml_workspace }}

@@ -38,6 +38,8 @@ jobs:
 
       - name: Submit AML job
         run: |
-          az ml job create --file github_workflows/components/command_job.yml \
+          az ml job create \
+            --file mlops/jobs/commandJob.yml \
             --resource-group streaming_autovehicle_pricing_MLOPS \
             --workspace-name project_iii_mlops
+

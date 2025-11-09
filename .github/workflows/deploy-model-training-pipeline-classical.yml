@@ -27,10 +27,18 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "AZURE_SUBSCRIPTION_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
-          echo "AZURE_TENANT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_SECRET=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
+          echo "::add-mask::$SUBSCRIPTION_ID"
+          echo "::add-mask::$TENANT_ID"
+          echo "::add-mask::$CLIENT_ID"
+          echo "::add-mask::$CLIENT_SECRET"
+          echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=$TENANT_ID" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
   check-azure-cli:
     runs-on: ubuntu-latest
@@ -45,10 +53,18 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "AZURE_SUBSCRIPTION_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
-          echo "AZURE_TENANT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_SECRET=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
+          echo "::add-mask::$SUBSCRIPTION_ID"
+          echo "::add-mask::$TENANT_ID"
+          echo "::add-mask::$CLIENT_ID"
+          echo "::add-mask::$CLIENT_SECRET"
+          echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=$TENANT_ID" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |

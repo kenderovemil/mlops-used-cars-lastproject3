@@ -1,6 +1,15 @@
 from azure.identity import DefaultAzureCredential
 from azure.ai.ml import MLClient, load_job
 import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import config module
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from mlops.config import load_credentials
+
+# Load credentials from JSON file
+load_credentials()
 
 credential = DefaultAzureCredential()
 

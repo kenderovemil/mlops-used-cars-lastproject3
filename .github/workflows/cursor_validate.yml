@@ -6,6 +6,10 @@ on:
     paths:
       - 'mlops/cursor_zone/**'
 
+env:
+  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
+  WORKSPACE_NAME: project_III_MLOPS
+
 concurrency:
   group: cursor-validation-${{ github.ref }}
   cancel-in-progress: true
@@ -16,9 +20,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-    env:
-      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
-      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

@@ -24,14 +24,16 @@ on:
     secrets:
       AZURE_CREDENTIALS:
         required: true
+
+env:
+  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
+  WORKSPACE_NAME: project_III_MLOPS
+
 jobs:
   register-environment:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      RESOURCE_GROUP: ${{ env.RESOURCE_GROUP }}
-      WORKSPACE_NAME: ${{ env.WORKSPACE_NAME }}
     steps:
       - name: checkout
         uses: actions/checkout@v4

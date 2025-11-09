@@ -26,13 +26,20 @@ jobs:
           cat > mlops/config/azure_credentials.json << 'EOF'
           {
             "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
-            "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
-            "WORKSPACE_NAME": "project_III_MLOPS",
+            "RESOURCE_GROUP": "${{ env.RESOURCE_GROUP }}",
+            "WORKSPACE_NAME": "${{ env.WORKSPACE_NAME }}",
             "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
             "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
             "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
           }
           EOF
+
+      - name: Validate Azure Credentials
+        run: |
+          jq . mlops/config/azure_credentials.json > /dev/null || {
+            echo "❌ Invalid JSON in azure_credentials.json"
+            exit 1
+          }
 
       - name: Azure login
         uses: azure/login@v1
@@ -56,13 +63,20 @@ jobs:
           cat > mlops/config/azure_credentials.json << 'EOF'
           {
             "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
-            "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
-            "WORKSPACE_NAME": "project_III_MLOPS",
+            "RESOURCE_GROUP": "${{ env.RESOURCE_GROUP }}",
+            "WORKSPACE_NAME": "${{ env.WORKSPACE_NAME }}",
             "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
             "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
             "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
           }
           EOF
+
+      - name: Validate Azure Credentials
+        run: |
+          jq . mlops/config/azure_credentials.json > /dev/null || {
+            echo "❌ Invalid JSON in azure_credentials.json"
+            exit 1
+          }
 
       - name: Azure login
         uses: azure/login@v1
@@ -71,7 +85,7 @@ jobs:
 
       - name: Set RG and WS
         run: |
-          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=streaming_autovehicule_pricing_MLOPS" >> $GITHUB_ENV
           echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI

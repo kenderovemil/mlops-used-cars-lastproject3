@@ -12,25 +12,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Create credentials file
+        run: |
+          mkdir -p mlops/config
+          cat > mlops/config/azure_credentials.json << 'EOF'
+          {
+            "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
+            "RESOURCE_GROUP": "streaming_autovehicle_pricing_MLOPS",
+            "WORKSPACE_NAME": "project_iii_mlops",
+            "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
+            "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
+            "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
+          }
+          EOF
+
       - name: Azure login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Set environment variables
-        run: |
-          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
-          TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
-          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-          CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
-          echo "::add-mask::$SUBSCRIPTION_ID"
-          echo "::add-mask::$TENANT_ID"
-          echo "::add-mask::$CLIENT_ID"
-          echo "::add-mask::$CLIENT_SECRET"
-          echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> $GITHUB_ENV
-          echo "AZURE_TENANT_ID=$TENANT_ID" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
-          echo "AZURE_CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Set storage key
         run: |

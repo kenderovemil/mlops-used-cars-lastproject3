@@ -12,4 +12,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.log
+# Azure credentials (educational project - tracked in repo but listed here for awareness)
+# mlops/config/azure_credentials.json
 

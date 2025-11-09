@@ -1,0 +1,861 @@
+================================================================================
+COMPREHENSIVE PROJECT REVIEW AND RECOMMENDATIONS
+MLOps Used Cars - Project Stability and Security Roadmap
+================================================================================
+Generated: 2025-11-09
+Review Scope: GitHub Workflows, Python Scripts, YAML Configurations, Project Structure
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+This review analyzed the entire MLOps project structure, focusing on:
+- 9 workflow files in .github/workflows/
+- 4 Python scripts in mlops/scripts/
+- Multiple YAML configuration files in mlops/azureml/train/
+- Overall project organization and best practices
+
+OVERALL ASSESSMENT:
+✅ STRENGTHS:
+   - Python scripts follow excellent practices (DefaultAzureCredential, environment variables)
+   - Most reusable workflows properly set environment variables
+   - Proper Azure ML schema usage in YAML files
+   - Good secret masking in most workflows
+
+❌ CRITICAL ISSUES FOUND: 6
+⚠️  WARNINGS/IMPROVEMENTS: 12
+
+================================================================================
+SECTION 1: CRITICAL ISSUES (Must Fix Immediately)
+================================================================================
+
+ISSUE #1: Hardcoded Resource Group and Workspace in train.yml
+-------------------------------------------------------------
+SEVERITY: HIGH - Security & Maintainability Risk
+LOCATION: .github/workflows/train.yml, lines 42-44
+
+PROBLEM:
+    The workflow hardcodes Azure resource group and workspace names:
+    ```yaml
+    --resource-group streaming_autovehicle_pricing_MLOPS \
+    --workspace-name project_iii_mlops
+    ```
+
+IMPACT:
+    - Cannot be reused across environments (dev/staging/prod)
+    - Changes require code modification instead of configuration
+    - Violates DRY (Don't Repeat Yourself) principle
+    - Inconsistent with other workflows
+
+FIX:
+    1. Add step to set environment variables:
+       ```yaml
+       - name: Set RG and WS
+         run: |
+           echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
+           echo "WORKSPACE_NAME=project_iii_mlops" >> $GITHUB_ENV
+       ```
+    
+    2. Update CLI command to use variables:
+       ```yaml
+       az ml job create \
+         --file mlops/azureml/train/command_job.yml \
+         --resource-group ${{ env.RESOURCE_GROUP }} \
+         --workspace-name ${{ env.WORKSPACE_NAME }}
+       ```
+    
+    3. BETTER: Read from config file like deploy-model-training-pipeline-classical.yml does
+
+
+ISSUE #2: Inconsistent Environment Variable Usage in Reusable Workflows
+------------------------------------------------------------------------
+SEVERITY: MEDIUM - Code Quality & Maintainability
+LOCATIONS: 
+    - .github/workflows/custom-register-dataset.yml, lines 82-87
+    - .github/workflows/custom-register-environment.yml, lines 93-104
+    - .github/workflows/custom-run-pipeline.yml, lines 89-90, 99-101, etc.
+
+PROBLEM:
+    Workflows set RESOURCE_GROUP and WORKSPACE_NAME in $GITHUB_ENV but then
+    CLI commands use ${{ inputs.resource_group }} and ${{ inputs.workspace_name }}
+    directly instead of ${{ env.RESOURCE_GROUP }} and ${{ env.WORKSPACE_NAME }}.
+
+EXAMPLE FROM custom-register-dataset.yml:
+    Lines 64-67: Sets env vars
+    Lines 82-83: Uses inputs directly in CLI command
+
+IMPACT:
+    - Environment variables are set but unused
+    - Inconsistent pattern across workflows
+    - Confusing for maintainers
+
+FIX:
+    Option A (Recommended): Use env vars in CLI commands
+    ```yaml
+    az ml data create --file ${{ github.workspace }}/${{ inputs.data_file }} \
+      --resource-group ${{ env.RESOURCE_GROUP }} \
+      --workspace-name ${{ env.WORKSPACE_NAME }}
+    ```
+    
+    Option B: Remove the "Set RG and WS" step if not using env vars
+    (but this reduces consistency with Python scripts)
+
+
+ISSUE #3: Missing Version Fields in Data and Environment YAML Files
+--------------------------------------------------------------------
+SEVERITY: MEDIUM - Version Control & Reproducibility
+LOCATIONS:
+    - mlops/azureml/train/data.yml (missing version)
+    - mlops/azureml/train/train-env.yml (missing version)
+
+PROBLEM:
+    While pipeline jobs reference specific versions (e.g., azureml:train-env:5),
+    the source YAML files don't specify versions, making it unclear which
+    version will be created/updated.
+
+IMPACT:
+    - Unclear versioning strategy
+    - Difficult to track changes over time
+    - May cause unexpected behavior when version auto-increments
+
+FIX:
+    Add version field to data.yml:
+    ```yaml
+    $schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+    type: uri_file
+    name: used-cars-data
+    version: "1"  # Add this
+    description: Dataset of used cars for price prediction
+    path: ../../../data/used_cars.csv
+    ```
+    
+    Add version field to train-env.yml:
+    ```yaml
+    $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+    name: used-cars-train-env
+    version: "1"  # Add this
+    image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
+    conda_file: train-conda.yml
+    description: Environment for training used cars price prediction model
+    ```
+
+
+ISSUE #4: No Error Handling in Python Scripts
+----------------------------------------------
+SEVERITY: MEDIUM - Robustness & Debugging
+LOCATIONS: All 4 Python scripts in mlops/scripts/
+
+PROBLEM:
+    Scripts lack:
+    - Try-catch blocks for Azure API calls
+    - Validation of environment variables before use
+    - Error handling for credential acquisition
+    - Proper error messages for debugging
+
+EXAMPLE (create_compute.py):
+    ```python
+    subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]  # May raise KeyError
+    ml_client.compute.begin_create_or_update(cpu_cluster).result()  # May fail
+    ```
+
+IMPACT:
+    - Cryptic error messages when environment variables are missing
+    - Difficult to debug Azure API failures
+    - Workflows may hang or fail silently
+
+FIX:
+    Add comprehensive error handling:
+    ```python
+    import sys
+    from azure.core.exceptions import AzureError
+    
+    try:
+        # Validate environment variables
+        required_vars = ["AZURE_SUBSCRIPTION_ID", "RESOURCE_GROUP", "WORKSPACE_NAME"]
+        missing_vars = [var for var in required_vars if var not in os.environ]
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {missing_vars}")
+        
+        # Get credentials
+        credential = DefaultAzureCredential()
+        
+        # Create ML client
+        subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
+        resource_group = os.environ["RESOURCE_GROUP"]
+        workspace_name = os.environ["WORKSPACE_NAME"]
+        
+        ml_client = MLClient(
+            credential=credential,
+            subscription_id=subscription_id,
+            resource_group_name=resource_group,
+            workspace_name=workspace_name
+        )
+        
+        # Perform operation
+        result = ml_client.compute.begin_create_or_update(cpu_cluster).result()
+        print(f"✅ Compute cluster created/updated: {result.name}")
+        
+    except KeyError as e:
+        print(f"❌ Error: Missing environment variable: {e}", file=sys.stderr)
+        sys.exit(1)
+    except AzureError as e:
+        print(f"❌ Azure API Error: {e}", file=sys.stderr)
+        sys.exit(2)
+    except Exception as e:
+        print(f"❌ Unexpected Error: {e}", file=sys.stderr)
+        sys.exit(3)
+    ```
+
+
+ISSUE #5: AZURE_STORAGE_KEY Not Masked in train.yml
+----------------------------------------------------
+SEVERITY: HIGH - Security Risk
+LOCATION: .github/workflows/train.yml, lines 36-37
+
+PROBLEM:
+    ```yaml
+    - name: Set storage key
+      run: |
+        echo "AZURE_STORAGE_KEY=${{ secrets.AZURE_STORAGE_KEY }}" >> $GITHUB_ENV
+    ```
+    
+    The storage key is set but NOT masked like other secrets.
+
+IMPACT:
+    - Storage key may appear in GitHub Actions logs
+    - Security vulnerability if logs are accessed
+
+FIX:
+    Add masking before setting:
+    ```yaml
+    - name: Set storage key
+      run: |
+        STORAGE_KEY="${{ secrets.AZURE_STORAGE_KEY }}"
+        echo "::add-mask::$STORAGE_KEY"
+        echo "AZURE_STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_ENV
+    ```
+
+
+ISSUE #6: Missing mlops/jobs/ Directory
+----------------------------------------
+SEVERITY: LOW - Project Organization
+LOCATION: Project root
+
+PROBLEM:
+    The problem statement expects a clear folder structure with mlops/jobs/
+    for job YAML files, but this directory doesn't exist. Job files are
+    currently in mlops/azureml/train/.
+
+IMPACT:
+    - Less clear separation between configuration and job definitions
+    - Harder to locate job YAML files
+    - Inconsistent with expected project structure
+
+FIX:
+    Option A: Create mlops/jobs/ and move job YAML files there:
+    ```bash
+    mkdir -p mlops/jobs
+    mv mlops/azureml/train/command_job.yml mlops/jobs/
+    mv mlops/azureml/train/newpipeline.yml mlops/jobs/
+    # Update all references in workflows
+    ```
+    
+    Option B: Document current structure as acceptable alternative:
+    - Keep jobs in mlops/azureml/train/
+    - Update documentation to reflect this decision
+    - Ensure consistent placement of future job files
+
+
+================================================================================
+SECTION 2: WARNINGS & IMPROVEMENT OPPORTUNITIES
+================================================================================
+
+WARNING #1: File Naming Inconsistency
+--------------------------------------
+SEVERITY: LOW - Code Style
+LOCATION: mlops/azureml/train/command_job.yml
+
+ISSUE:
+    File uses snake_case (command_job.yml) while Azure ML schema uses
+    camelCase (commandJob.schema.json).
+
+RECOMMENDATION:
+    Rename to commandJob.yml or command-job.yml for consistency.
+    Update all workflow references.
+
+
+WARNING #2: Inconsistent Resource Group Casing
+-----------------------------------------------
+SEVERITY: LOW - Configuration Consistency
+LOCATIONS:
+    - config-infra-prod.yml: streaming_autovehicle_pricing_MLOPS (mixed case)
+    - train.yml: streaming_autovehicle_pricing_MLOPS (mixed case)
+    - newpipeline.yml: streaming_autovehicle_pricing_mlops (lowercase)
+
+ISSUE:
+    Inconsistent casing in resource group name across files.
+
+RECOMMENDATION:
+    Standardize on one casing (probably the actual Azure resource name).
+    Update config-infra-prod.yml as single source of truth.
+
+
+WARNING #3: Duplicate/Legacy Files
+-----------------------------------
+SEVERITY: LOW - Project Cleanliness
+LOCATION: github_workflows/ directory (not .github/workflows/)
+
+ISSUE:
+    There's a github_workflows/ folder separate from .github/workflows/
+    containing component YAML files. Unclear if this is legacy or active.
+
+RECOMMENDATION:
+    - If legacy: Delete or move to archive folder
+    - If active: Document purpose and relationship to .github/workflows/
+    - Consider consolidating to avoid confusion
+
+
+WARNING #4: read-yaml.yml Doesn't Set Environment Variables
+------------------------------------------------------------
+SEVERITY: LOW - Consistency
+LOCATION: .github/workflows/read-yaml.yml
+
+ISSUE:
+    Unlike other reusable workflows, read-yaml.yml doesn't set RESOURCE_GROUP
+    and WORKSPACE_NAME in $GITHUB_ENV. It only outputs them for job outputs.
+
+RECOMMENDATION:
+    Add environment variable setting for consistency:
+    ```yaml
+    - name: Set RG and WS
+      run: |
+        RG=$(cat ${{ inputs.file_name }} | yq '.resource_group')
+        WS=$(cat ${{ inputs.file_name }} | yq '.aml_workspace')
+        echo "RESOURCE_GROUP=$RG" >> $GITHUB_ENV
+        echo "WORKSPACE_NAME=$WS" >> $GITHUB_ENV
+    ```
+
+
+WARNING #5: No Validation Steps in Some Workflows
+--------------------------------------------------
+SEVERITY: MEDIUM - Error Prevention
+LOCATIONS:
+    - custom-register-dataset.yml
+    - custom-register-environment.yml
+    - custom-create-compute.yml
+
+ISSUE:
+    Unlike custom-run-pipeline.yml which validates resources before running,
+    other workflows don't validate that operations succeeded.
+
+RECOMMENDATION:
+    Add validation steps similar to custom-run-pipeline.yml:
+    ```yaml
+    - name: Validate dataset creation
+      run: |
+        az ml data show --name ${{ inputs.name }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --workspace-name ${{ env.WORKSPACE_NAME }} || {
+          echo "❌ Dataset creation failed"
+          exit 1
+        }
+    ```
+
+
+WARNING #6: Mixed Configuration Approaches
+-------------------------------------------
+SEVERITY: MEDIUM - Architecture Consistency
+LOCATIONS: Various workflows
+
+ISSUE:
+    Some workflows read from config-infra-prod.yml (via read-yaml.yml),
+    others have hardcoded values, others use secrets, and others use inputs.
+    No clear single source of truth.
+
+RECOMMENDATION:
+    Standardize on ONE approach (recommended: config file + environments):
+    
+    1. Create config files per environment:
+       - mlops/config/dev.yml
+       - mlops/config/staging.yml
+       - mlops/config/prod.yml
+    
+    2. Use environment-based workflow_dispatch:
+       ```yaml
+       on:
+         workflow_dispatch:
+           inputs:
+             environment:
+               type: choice
+               options: [dev, staging, prod]
+       ```
+    
+    3. All workflows read from appropriate config file
+
+
+WARNING #7: No Container/Image Versions in Environments
+--------------------------------------------------------
+SEVERITY: LOW - Version Control
+LOCATION: mlops/azureml/train/train-env.yml
+
+ISSUE:
+    ```yaml
+    image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
+    ```
+    No explicit version tag on the image (uses implicit latest).
+
+RECOMMENDATION:
+    Use explicit image tags:
+    ```yaml
+    image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:latest
+    # Or pin to specific SHA for reproducibility:
+    image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04@sha256:abc123...
+    ```
+
+
+WARNING #8: No Automated Tests for Workflows
+---------------------------------------------
+SEVERITY: MEDIUM - Quality Assurance
+LOCATION: Repository lacks workflow tests
+
+ISSUE:
+    No automated testing of workflow YAML syntax or logic.
+
+RECOMMENDATION:
+    Add workflow validation:
+    1. YAML linting in CI:
+       ```yaml
+       - name: Validate workflow YAML
+         run: |
+           yamllint .github/workflows/*.yml
+       ```
+    
+    2. Use act or similar tool to test workflows locally
+    
+    3. Add test workflow that validates configuration files
+
+
+WARNING #9: No Dependency Version Pinning in Python Scripts
+------------------------------------------------------------
+SEVERITY: LOW - Reproducibility
+LOCATION: Workflows that install Python packages
+
+ISSUE:
+    ```yaml
+    pip install azure-ai-ml azure-identity
+    ```
+    No version pinning for dependencies.
+
+RECOMMENDATION:
+    Create requirements.txt and pin versions:
+    ```
+    azure-ai-ml==1.11.1
+    azure-identity==1.15.0
+    ```
+    
+    Then use:
+    ```yaml
+    pip install -r mlops/requirements.txt
+    ```
+
+
+WARNING #10: sudo az upgrade in Every Workflow
+-----------------------------------------------
+SEVERITY: LOW - Performance & Reliability
+LOCATION: Multiple workflows
+
+ISSUE:
+    Most workflows run `sudo az upgrade --yes` which:
+    - Takes significant time (1-2 minutes per workflow)
+    - May introduce breaking changes
+    - Inconsistent Azure CLI versions across runs
+
+RECOMMENDATION:
+    Option A: Use specific Azure CLI version in container:
+    ```yaml
+    container:
+      image: mcr.microsoft.com/azure-cli:2.54.0
+    ```
+    
+    Option B: Remove upgrade and rely on runner's preinstalled version
+    (GitHub runners have recent Azure CLI)
+    
+    Option C: Only upgrade in one workflow per pipeline run
+
+
+WARNING #11: No Centralized Secret Management Documentation
+------------------------------------------------------------
+SEVERITY: LOW - Documentation
+LOCATION: Repository lacks comprehensive secret documentation
+
+ISSUE:
+    Multiple secrets referenced (AZURE_CREDENTIALS, AZURE_STORAGE_KEY,
+    AZURE_WORKSPACE_NAME) but no central documentation of:
+    - Which secrets are required
+    - How to create them
+    - What format they should be in
+    - Which workflows need which secrets
+
+RECOMMENDATION:
+    Create SECRETS.md documenting:
+    ```markdown
+    # Required Secrets
+    
+    ## AZURE_CREDENTIALS
+    Format: JSON service principal
+    Required by: All workflows
+    Creation: az ad sp create-for-rbac --name "github-actions" ...
+    
+    ## AZURE_STORAGE_KEY
+    Format: String
+    Required by: train.yml
+    Creation: az storage account keys list ...
+    ```
+
+
+WARNING #12: Compute Configuration Hardcoded in Python Script
+--------------------------------------------------------------
+SEVERITY: LOW - Configuration Management
+LOCATION: mlops/scripts/create_compute.py, lines 20-26
+
+ISSUE:
+    Compute cluster configuration is hardcoded in Python script:
+    ```python
+    cpu_cluster = AmlCompute(
+        name="cpu-cluster",
+        size="Standard_DS11_v2",
+        min_instances=0,
+        max_instances=1,
+        tier="dedicated"
+    )
+    ```
+
+RECOMMENDATION:
+    Make configurable via environment variables:
+    ```python
+    cpu_cluster = AmlCompute(
+        name=os.environ.get("CLUSTER_NAME", "cpu-cluster"),
+        size=os.environ.get("CLUSTER_SIZE", "Standard_DS11_v2"),
+        min_instances=int(os.environ.get("CLUSTER_MIN_INSTANCES", "0")),
+        max_instances=int(os.environ.get("CLUSTER_MAX_INSTANCES", "1")),
+        tier=os.environ.get("CLUSTER_TIER", "dedicated")
+    )
+    ```
+
+
+================================================================================
+SECTION 3: POSITIVE FINDINGS (Keep These Practices)
+================================================================================
+
+✅ STRENGTH #1: Excellent Python Script Patterns
+    All scripts in mlops/scripts/ follow best practices:
+    - Use DefaultAzureCredential() for authentication
+    - Read from environment variables (no hardcoding)
+    - Clean, readable code structure
+    
+✅ STRENGTH #2: Proper Azure ML Schema Usage
+    All YAML configuration files use correct schemas from azuremlschemas.azureedge.net
+    
+✅ STRENGTH #3: Comprehensive Secret Masking (Mostly)
+    Most workflows properly mask sensitive values using ::add-mask::
+    
+✅ STRENGTH #4: Reusable Workflow Pattern
+    Good use of reusable workflows (workflow_call) for modularity
+    
+✅ STRENGTH #5: Excellent Error Handling in custom-run-pipeline.yml
+    Best-in-class error handling with validation, status checks, and
+    detailed error codes
+
+
+================================================================================
+SECTION 4: IMPLEMENTATION ROADMAP
+================================================================================
+
+PHASE 1: CRITICAL SECURITY & STABILITY FIXES (Priority: HIGH, Time: 1-2 days)
+-----------------------------------------------------------------------------
+1. Fix AZURE_STORAGE_KEY masking in train.yml (Issue #5)
+2. Add error handling to all Python scripts (Issue #4)
+3. Fix hardcoded values in train.yml (Issue #1)
+4. Make CLI commands use environment variables (Issue #2)
+
+ESTIMATED IMPACT: 
+   - Eliminates security vulnerability
+   - Prevents silent failures
+   - Enables multi-environment support
+
+
+PHASE 2: VERSIONING & REPRODUCIBILITY (Priority: MEDIUM, Time: 2-3 days)
+-------------------------------------------------------------------------
+1. Add version fields to data.yml and train-env.yml (Issue #3)
+2. Pin Python dependency versions (Warning #9)
+3. Use explicit image versions in environment files (Warning #7)
+4. Document versioning strategy
+
+ESTIMATED IMPACT:
+   - Reproducible builds
+   - Easier rollback
+   - Clear change tracking
+
+
+PHASE 3: PROJECT ORGANIZATION (Priority: MEDIUM, Time: 1-2 days)
+-----------------------------------------------------------------
+1. Decide on mlops/jobs/ vs mlops/azureml/train/ (Issue #6)
+2. Consolidate or document github_workflows/ folder (Warning #3)
+3. Standardize file naming conventions (Warning #1)
+4. Fix resource group casing inconsistencies (Warning #2)
+
+ESTIMATED IMPACT:
+   - Clearer project structure
+   - Easier onboarding for new developers
+   - Reduced confusion
+
+
+PHASE 4: CONSISTENCY & STANDARDS (Priority: LOW, Time: 2-3 days)
+-----------------------------------------------------------------
+1. Standardize configuration management approach (Warning #6)
+2. Add validation to all workflows (Warning #5)
+3. Update read-yaml.yml to set env vars (Warning #4)
+4. Make compute configuration configurable (Warning #12)
+
+ESTIMATED IMPACT:
+   - Consistent patterns across project
+   - Easier maintenance
+   - Better error detection
+
+
+PHASE 5: TESTING & DOCUMENTATION (Priority: LOW, Time: 3-5 days)
+-----------------------------------------------------------------
+1. Add YAML linting to CI (Warning #8)
+2. Create workflow tests (Warning #8)
+3. Document secret management (Warning #11)
+4. Optimize Azure CLI upgrades (Warning #10)
+5. Create comprehensive CONTRIBUTING.md with standards
+
+ESTIMATED IMPACT:
+   - Catch errors before deployment
+   - Faster onboarding
+   - Better team collaboration
+
+
+================================================================================
+SECTION 5: FUTURE MAINTENANCE STRATEGY
+================================================================================
+
+1. CENTRALIZED CONFIGURATION MANAGEMENT
+   --------------------------------------
+   Strategy:
+   - Single config-infra-{env}.yml per environment
+   - All workflows read from config files
+   - No hardcoded resource names
+   - Version control config files
+   
+   Tools:
+   - Use yq for YAML parsing
+   - Validate config files in CI
+   - Template config files for new environments
+
+
+2. STANDARDIZED FILE NAMING CONVENTIONS
+   -------------------------------------
+   Establish conventions:
+   - Workflows: kebab-case (custom-register-dataset.yml)
+   - Job files: camelCase (commandJob.yml) to match schema
+   - Python files: snake_case (create_compute.py)
+   - Config files: kebab-case (config-infra-prod.yml)
+   
+   Document in CONTRIBUTING.md
+
+
+3. AUTOMATED VALIDATION
+   ---------------------
+   Implement:
+   - Pre-commit hooks for YAML linting
+   - CI workflow to validate all YAML files
+   - Unit tests for Python scripts
+   - Integration tests for workflows (using act or GitHub API)
+   
+   Tools:
+   - yamllint
+   - pytest for Python
+   - actionlint for workflows
+
+
+4. SECRET ROTATION POLICY
+   -----------------------
+   Establish:
+   - Quarterly rotation of service principals
+   - Automated secret expiration alerts
+   - Document secret creation/rotation process
+   - Use Azure Key Vault for production secrets
+   
+   Process:
+   1. Create new service principal
+   2. Test with new credentials
+   3. Update GitHub secrets
+   4. Revoke old service principal
+   5. Document in change log
+
+
+5. VERSION CONTROL STRATEGY
+   -------------------------
+   Implement:
+   - Semantic versioning for datasets (1.0.0, 1.1.0, 2.0.0)
+   - Semantic versioning for environments
+   - Semantic versioning for models
+   - Tag Git commits with version releases
+   
+   Workflow:
+   1. Increment version in YAML file
+   2. Update all references
+   3. Test with new version
+   4. Commit with version in message
+   5. Create Git tag
+
+
+6. ERROR HANDLING STANDARDS
+   -------------------------
+   All scripts must:
+   - Validate environment variables at startup
+   - Use try-catch for all external calls
+   - Return specific exit codes (0=success, 1=config error, 2=Azure error, 3=other)
+   - Log detailed error messages
+   - Include troubleshooting hints in error messages
+   
+   Template:
+   ```python
+   def main():
+       try:
+           validate_environment()
+           credential = get_credential()
+           client = create_client(credential)
+           result = perform_operation(client)
+           print_success(result)
+           return 0
+       except ConfigError as e:
+           print_error("Configuration", e)
+           return 1
+       except AzureError as e:
+           print_error("Azure API", e)
+           return 2
+       except Exception as e:
+           print_error("Unexpected", e)
+           return 3
+   ```
+
+
+7. CODE REVIEW CHECKLIST
+   ----------------------
+   Every PR must verify:
+   ☐ No hardcoded resource names
+   ☐ All secrets are masked
+   ☐ Environment variables used consistently
+   ☐ Error handling present
+   ☐ Versions specified for dependencies
+   ☐ YAML files validated
+   ☐ Tests pass
+   ☐ Documentation updated
+   
+   Use GitHub branch protection to enforce
+
+
+8. MONITORING & ALERTING
+   ----------------------
+   Implement:
+   - Workflow failure notifications (Slack/Teams)
+   - Resource quota monitoring
+   - Cost monitoring for compute resources
+   - Model performance monitoring
+   
+   Tools:
+   - GitHub Actions notifications
+   - Azure Monitor
+   - Azure Cost Management
+   - Azure ML monitoring
+
+
+9. DOCUMENTATION MAINTENANCE
+   --------------------------
+   Keep updated:
+   - README.md: High-level overview
+   - CONTRIBUTING.md: Development standards
+   - SECRETS.md: Secret management
+   - ARCHITECTURE.md: System design
+   - CHANGELOG.md: Version history
+   
+   Review quarterly
+
+
+10. REGULAR AUDITS
+    --------------
+    Schedule:
+    - Monthly: Review workflow runs for failures
+    - Quarterly: Security audit (secrets, permissions)
+    - Quarterly: Dependency updates
+    - Bi-annually: Architecture review
+    
+    Document findings and action items
+
+
+================================================================================
+SECTION 6: QUICK REFERENCE - COMMANDS & SNIPPETS
+================================================================================
+
+VALIDATE YAML FILES:
+-------------------
+yamllint .github/workflows/*.yml
+yamllint mlops/azureml/train/*.yml
+
+
+CHECK FOR HARDCODED VALUES:
+---------------------------
+grep -r "streaming_autovehicle" .github/workflows/
+grep -r "project_iii" .github/workflows/
+grep -r "project_III" .github/workflows/
+
+
+TEST PYTHON SCRIPTS LOCALLY:
+----------------------------
+export AZURE_SUBSCRIPTION_ID="your-sub-id"
+export RESOURCE_GROUP="your-rg"
+export WORKSPACE_NAME="your-workspace"
+python mlops/scripts/create_compute.py
+
+
+VALIDATE AZURE ML YAML:
+-----------------------
+az ml data validate --file mlops/azureml/train/data.yml
+az ml environment validate --file mlops/azureml/train/train-env.yml
+az ml job validate --file mlops/azureml/train/command_job.yml
+
+
+LIST ALL SECRETS USED:
+----------------------
+grep -r "secrets\." .github/workflows/ | grep -o "secrets\.[A-Z_]*" | sort -u
+
+
+CHECK AZURE CLI VERSION:
+-----------------------
+az version
+
+
+================================================================================
+SECTION 7: CONTACT & SUPPORT
+================================================================================
+
+For questions or clarifications about these recommendations:
+
+1. Review this document thoroughly
+2. Check existing documentation (README.md, CONTRIBUTING.md)
+3. Review Azure ML documentation: https://learn.microsoft.com/azure/machine-learning/
+4. Review GitHub Actions documentation: https://docs.github.com/actions
+
+Remember: These recommendations are a roadmap, not a mandate. Prioritize based
+on your team's capacity and business needs. The critical security issues
+(Phase 1) should be addressed first, while other improvements can be implemented
+incrementally.
+
+Good luck with your MLOps journey! 🚀
+
+================================================================================
+END OF DOCUMENT
+================================================================================

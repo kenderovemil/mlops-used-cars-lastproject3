@@ -1,0 +1,16 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+
+command: >-
+  python train.py --data ${{inputs.training_data}} --lr 0.01
+
+environment: azureml:train-env:3
+
+inputs:
+  training_data:
+    type: uri_file
+    path: azureml:skycore_input_data_awakening:1
+
+compute: azureml:lastprojectcompute
+experiment_name: project_III_MLOPS
+description: "Training job for SkyCore"

@@ -30,6 +30,12 @@ jobs:
           }
           EOF
 
+      - name: Export Azure subscription/workspace variables
+        run: |
+          echo "AZURE_SUBSCRIPTION_ID=${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "AZURE_RESOURCE_GROUP=${{ env.RESOURCE_GROUP }}" >> $GITHUB_ENV
+          echo "AZURE_WORKSPACE_NAME=${{ env.WORKSPACE_NAME }}" >> $GITHUB_ENV
+
       - name: Validate Azure Credentials
         run: |
           jq . mlops/config/azure_credentials.json > /dev/null || {

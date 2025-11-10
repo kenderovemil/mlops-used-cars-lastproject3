@@ -15,3 +15,7 @@ __pycache__/
 # Azure credentials (educational project - tracked in repo but listed here for awareness)
 # mlops/config/azure_credentials.json
 
+# Job review output files (keep samples)
+ai_reviews/job_review.csv
+ai_reviews/job_review.pdf
+ai_reviews/jobs_review.md

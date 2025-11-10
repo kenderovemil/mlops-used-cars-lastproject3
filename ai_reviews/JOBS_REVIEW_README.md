@@ -15,7 +15,13 @@ This script retrieves and reviews the last 5 jobs from the Azure ML workspace `p
 Install required Python packages:
 
 ```bash
-pip install azure-ai-ml azure-identity
+pip install -r requirements.txt
+```
+
+Or install packages individually:
+
+```bash
+pip install azure-ai-ml azure-identity pandas reportlab
 ```
 
 ## Usage
@@ -30,7 +36,10 @@ cd ai_reviews
 The script will:
 1. Install required dependencies
 2. Run the review script
-3. Generate `jobs_review.md`
+3. Generate three output files:
+   - `jobs_review.md` (Markdown table)
+   - `job_review.csv` (CSV format)
+   - `job_review.pdf` (PDF report)
 
 ### Option 2: Manual execution
 
@@ -50,7 +59,13 @@ python review_jobs.py
 
 ### Output
 
-The script will generate a file `jobs_review.md` in the same directory with the following information for each job:
+The script will generate three files in the `ai_reviews/` directory:
+
+1. **jobs_review.md** - Markdown table format
+2. **job_review.csv** - CSV format for data analysis
+3. **job_review.pdf** - Professional PDF report
+
+Each file contains the following information for the last 5 jobs:
 
 - Job ID
 - Display Name

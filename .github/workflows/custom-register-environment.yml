@@ -90,6 +90,14 @@ jobs:
         run: |
           sudo az upgrade --yes
           az --version
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Azure ML SDK
+        run: pip install azure-ai-ml
           
       - name: install-extension
         run: az extension add -n ml -y

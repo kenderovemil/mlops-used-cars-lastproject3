@@ -61,6 +61,14 @@ jobs:
           echo "::add-mask::$STORAGE_KEY"
           echo "AZURE_STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_ENV
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Azure ML SDK
+        run: pip install azure-ai-ml
+
   check-azure-cli:
     runs-on: ubuntu-latest
     steps:
@@ -108,6 +116,14 @@ jobs:
         run: |
           sudo az upgrade --yes
           az --version
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Azure ML SDK
+        run: pip install azure-ai-ml
 
   get-config:
     uses: ./.github/workflows/read-yaml.yml

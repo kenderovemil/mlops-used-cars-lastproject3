@@ -1,82 +1,52 @@
-name: New Pipeline
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+name: new-pipeline
+display_name: New Pipeline (Local File)
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-
-env:
-  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
-  WORKSPACE_NAME: project_III_MLOPS
-
-permissions:
-  contents: read
+inputs:
+  training_data:
+    type: uri_file
+    path: ./src/data/used_cars_raw.csv   # локален CSV файл от репото
 
 jobs:
-  create-compute:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  prep_job:
+    type: command
+    component: azureml:data_prep_component:1
+    inputs:
+      raw_data: ${{parent.inputs.training_data}}
+    compute: azureml:lastprojectcompute
+    environment: azureml:data-env:1
+    outputs:
+      cleaned_data:
+        type: uri_folder
 
-      - name: Create credentials file
-        run: |
-          mkdir -p mlops/config
-          cat > mlops/config/azure_credentials.json << 'EOF'
-          {
-            "AZURE_SUBSCRIPTION_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}",
-            "RESOURCE_GROUP": "${{ env.RESOURCE_GROUP }}",
-            "WORKSPACE_NAME": "${{ env.WORKSPACE_NAME }}",
-            "AZURE_CLIENT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}",
-            "AZURE_CLIENT_SECRET": "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}",
-            "AZURE_TENANT_ID": "${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
-          }
-          EOF
+  train_job:
+    type: command
+    component: azureml:train_component:1
+    inputs:
+      training_data: ${{jobs.prep_job.outputs.cleaned_data}}
+    compute: azureml:lastprojectcompute
+    environment: azureml:train-env:3
+    outputs:
+      model_output:
+        type: uri_folder
 
-      - name: Validate Azure Credentials
-        run: |
-          jq . mlops/config/azure_credentials.json > /dev/null || {
-            echo "❌ Invalid JSON in azure_credentials.json"
-            exit 1
-          }
+  eval_job:
+    type: command
+    component: azureml:eval_component:1
+    inputs:
+      model_input: ${{jobs.train_job.outputs.model_output}}
+      test_data: ${{jobs.prep_job.outputs.cleaned_data}}
+    compute: azureml:lastprojectcompute
+    environment: azureml:eval-env:1
+    outputs:
+      eval_output:
+        type: uri_folder
 
-      - name: Azure login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Set RG and WS
-        run: |
-          echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
-
-      - name: Set storage key
-        run: |
-          STORAGE_KEY="${{ secrets.AZURE_STORAGE_KEY }}"
-          echo "::add-mask::$STORAGE_KEY"
-          echo "AZURE_STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_ENV
-
-      - name: Update Azure CLI
-        run: |
-          sudo az upgrade --yes
-          az --version
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          
-      - name: Install Python dependencies
-        run: |
-          pip install azure-ai-ml azure-identity
-          
-      - name: Create compute cluster
-        run: |
-          echo "Creating compute cluster"
-          python mlops/scripts/create_compute.py
+  reg_job:
+    type: command
+    component: azureml:register_component:1
+    inputs:
+      model_input: ${{jobs.train_job.outputs.model_output}}
+    compute: azureml:lastprojectcompute
+    environment: azureml:register-env:1

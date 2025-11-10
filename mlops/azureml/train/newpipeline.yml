@@ -2,17 +2,14 @@ name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
 inputs:
-  raw_data:
-    type: uri_file
-    path: azureml:skycore_input_data_awakening:2
-    mode: download
+  training_data: azureml:used_cars_dataset:1
 
 jobs:
   prep_data:
     type: command
     component: azureml:prep_data_component:1
     inputs:
-      raw_data: ${{inputs.raw_data}}
+      raw_data: ${{inputs.training_data}}
     outputs:
       clean_data: ${{outputs.clean_data}}
     compute: cpu-cluster

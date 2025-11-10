@@ -7,9 +7,7 @@ command: >-
 environment: azureml:train-env:3
 
 inputs:
-  training_data:
-    type: uri_file
-    path: azureml:skycore_input_data_awakening:1
+  training_data: azureml:used_cars_dataset:1
 
 compute: azureml:lastprojectcompute
 experiment_name: project_III_MLOPS

@@ -8,9 +8,7 @@ description: Pipeline for Cursor to validate component structure and AzureML int
 experiment_name: cursor-validation-exp
 
 inputs:
-  raw_data:
-    type: uri_file
-    path: azureml:used_cars_input_data:1
+  training_data: azureml:used_cars_dataset:1
 
 outputs:
   train_data:
@@ -28,7 +26,7 @@ jobs:
     component: ../azureml/train/prep.yml
     compute: azureml:cpu-cluster
     inputs:
-      raw_data: ${{parent.inputs.raw_data}}
+      raw_data: ${{parent.inputs.training_data}}
     outputs:
       train_data: ${{parent.outputs.train_data}}
       test_data: ${{parent.outputs.test_data}}

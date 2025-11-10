@@ -14,7 +14,7 @@ environment: azureml:train-env:5
 
 # 📂 Входове
 inputs:
-  training_data: azureml:used_cars_dataset:1
+  training_data: azureml:used-cars-data:2.55654
 
 # 📦 Изходи
 outputs:
@@ -35,4 +35,4 @@ tags:
   project: SkyCore
   owner: Emil
   purpose: training
-  dataset_version: "1"
+  dataset_version: "2.55654"

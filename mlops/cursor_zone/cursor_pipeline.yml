@@ -8,7 +8,7 @@ description: Pipeline for Cursor to validate component structure and AzureML int
 experiment_name: cursor-validation-exp
 
 inputs:
-  training_data: azureml:used_cars_dataset:1
+  training_data: azureml:used-cars-data:2.55654
 
 outputs:
   train_data:

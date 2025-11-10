@@ -8,7 +8,7 @@ code: /mnt/batch/tasks/shared/LS_root/mounts/clusters/lastprojectcompute/code/Us
 environment: azureml:used-cars-env:1
 compute: cpu-cluster
 inputs:
-  training_data: azureml:used_cars_dataset:1
+  training_data: azureml:used-cars-data:2.55654
 outputs:
   train_data:
     type: uri_folder

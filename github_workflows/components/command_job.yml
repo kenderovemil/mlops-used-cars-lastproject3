@@ -7,7 +7,7 @@ command: >-
 environment: azureml:train-env:3
 
 inputs:
-  training_data: azureml:used_cars_dataset:1
+  training_data: azureml:used-cars-data:2.55654
 
 compute: azureml:lastprojectcompute
 experiment_name: project_III_MLOPS

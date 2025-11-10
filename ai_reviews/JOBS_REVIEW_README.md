@@ -20,14 +20,28 @@ pip install azure-ai-ml azure-identity
 
 ## Usage
 
-### Set Environment Variables
+### Option 1: Using the convenience script
+
+```bash
+cd ai_reviews
+./run_review.sh
+```
+
+The script will:
+1. Install required dependencies
+2. Run the review script
+3. Generate `jobs_review.md`
+
+### Option 2: Manual execution
+
+#### Set Environment Variables
 
 ```bash
 export AZURE_SUBSCRIPTION_ID="your-subscription-id"
 export RESOURCE_GROUP="your-resource-group"
 ```
 
-### Run the Script
+#### Run the Script
 
 ```bash
 cd ai_reviews

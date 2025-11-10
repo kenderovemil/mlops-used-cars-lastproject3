@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - newpipeline.yml
+      - mlops/azureml/train/newpipeline.yml
       - .github/workflows/azureml-pipeline.yml
 
 permissions:
@@ -34,4 +34,4 @@ jobs:
           workspace-name: project_iii_mlops
           resource-group: streaming_autovehicle_pricing_MLOPS
           subscription-id: 77c91b3f-d78c-4832-8ed2-a5dd9c501e0e
-          job-input-path: newpipeline.yml
+          job-input-path: mlops/azureml/train/newpipeline.yml

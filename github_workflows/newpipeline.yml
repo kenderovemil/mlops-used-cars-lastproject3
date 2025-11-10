@@ -9,7 +9,7 @@ jobs:
     type: command
     component: azureml:prep_data_component:1
     inputs:
-      raw_data: ${{inputs.training_data}}
+      raw_data: ${{parent.inputs.training_data}}
     outputs:
       clean_data: ${{outputs.clean_data}}
     compute: cpu-cluster

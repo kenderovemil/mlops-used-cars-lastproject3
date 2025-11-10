@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to review the last 5 jobs from Azure ML workspace.
-Retrieves job information and saves it to a markdown table.
+Retrieves job information and saves it to markdown, CSV, and PDF formats.
 """
 
 from azure.ai.ml import MLClient
@@ -9,6 +9,13 @@ from azure.identity import DefaultAzureCredential
 from datetime import datetime
 import os
 import sys
+import csv
+import pandas as pd
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
 
 # Add parent directory to path to import utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'mlops', 'scripts'))
@@ -39,6 +46,83 @@ def format_datetime(dt):
             return dt
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     return "N/A"
+
+def save_to_csv(jobs_data, output_path):
+    """Save jobs data to CSV file."""
+    try:
+        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Job ID', 'Display Name', 'Status', 'Dataset', 'Start Time', 'End Time']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            
+            writer.writeheader()
+            for job in jobs_data:
+                writer.writerow(job)
+        
+        print(f"✅ CSV file saved to: {output_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving CSV file: {e}")
+        return False
+
+def save_to_pdf(jobs_data, output_path, workspace_name):
+    """Save jobs data to PDF file."""
+    try:
+        # Create PDF document
+        doc = SimpleDocTemplate(output_path, pagesize=landscape(letter))
+        elements = []
+        
+        # Add title
+        styles = getSampleStyleSheet()
+        title = Paragraph(f"<b>Azure ML Jobs Review - {workspace_name}</b>", styles['Heading1'])
+        elements.append(title)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Add generation date
+        date_text = Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal'])
+        elements.append(date_text)
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # Prepare table data
+        table_data = [['Job ID', 'Display Name', 'Status', 'Dataset', 'Start Time', 'End Time']]
+        for job in jobs_data:
+            table_data.append([
+                job['Job ID'],
+                job['Display Name'],
+                job['Status'],
+                job['Dataset'],
+                job['Start Time'],
+                job['End Time']
+            ])
+        
+        # Create table
+        table = Table(table_data, colWidths=[1.5*inch, 1.8*inch, 1*inch, 1.8*inch, 1.5*inch, 1.5*inch])
+        
+        # Style the table
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        elements.append(table)
+        
+        # Build PDF
+        doc.build(elements)
+        print(f"✅ PDF file saved to: {output_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving PDF file: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def main():
     # Workspace configuration
@@ -99,6 +183,9 @@ def main():
         
         print(f"✅ Found {len(jobs_list)} jobs")
         
+        # Collect job data in a structured format
+        jobs_data = []
+        
         # Prepare markdown table
         table_lines = [
             "# Azure ML Jobs Review",
@@ -110,7 +197,7 @@ def main():
             "|--------|--------------|--------|---------|------------|----------|"
         ]
         
-        # Add each job to the table
+        # Add each job to the table and collect data
         for job in jobs_list:
             job_id = job.name if hasattr(job, 'name') else "N/A"
             display_name = job.display_name if hasattr(job, 'display_name') else "N/A"
@@ -127,17 +214,43 @@ def main():
                 if hasattr(job, 'creation_context') and hasattr(job.creation_context, 'last_modified_at'):
                     end_time = format_datetime(job.creation_context.last_modified_at)
             
-            # Create table row
+            # Collect structured data for CSV and PDF
+            jobs_data.append({
+                'Job ID': job_id,
+                'Display Name': display_name,
+                'Status': status,
+                'Dataset': dataset,
+                'Start Time': start_time,
+                'End Time': end_time
+            })
+            
+            # Create markdown table row
             row = f"| {job_id} | {display_name} | {status} | {dataset} | {start_time} | {end_time} |"
             table_lines.append(row)
         
-        # Write to file
-        output_path = os.path.join(os.path.dirname(__file__), "jobs_review.md")
-        with open(output_path, 'w') as f:
-            f.write('\n'.join(table_lines))
+        # Output directory
+        output_dir = os.path.dirname(__file__)
         
-        print(f"\n✅ Jobs review saved to: {output_path}")
-        print(f"\nPreview of the table:")
+        # Save to Markdown
+        md_output_path = os.path.join(output_dir, "jobs_review.md")
+        with open(md_output_path, 'w') as f:
+            f.write('\n'.join(table_lines))
+        print(f"\n✅ Markdown file saved to: {md_output_path}")
+        
+        # Save to CSV
+        csv_output_path = os.path.join(output_dir, "job_review.csv")
+        save_to_csv(jobs_data, csv_output_path)
+        
+        # Save to PDF
+        pdf_output_path = os.path.join(output_dir, "job_review.pdf")
+        save_to_pdf(jobs_data, pdf_output_path, workspace_name)
+        
+        print(f"\n📊 Summary:")
+        print(f"  - Markdown: {md_output_path}")
+        print(f"  - CSV: {csv_output_path}")
+        print(f"  - PDF: {pdf_output_path}")
+        
+        print(f"\nPreview of the markdown table:")
         print('\n'.join(table_lines))
         
     except Exception as e:

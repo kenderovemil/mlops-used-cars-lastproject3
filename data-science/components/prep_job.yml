@@ -3,14 +3,12 @@ name: prep-data-job
 display_name: prep-data-job
 type: command
 command: >
-  python prepare.py --raw_data ${{inputs.raw_data}} --train_output ${{outputs.train_data}} --test_output ${{outputs.test_data}}
+  python prepare.py --raw_data ${{inputs.training_data}} --train_output ${{outputs.train_data}} --test_output ${{outputs.test_data}}
 code: /mnt/batch/tasks/shared/LS_root/mounts/clusters/lastprojectcompute/code/Users/kenderov.emil/data-science/src
 environment: azureml:used-cars-env:1
 compute: cpu-cluster
 inputs:
-  raw_data:
-    path: azureml:used-cars-data@latest
-    mode: ro_mount
+  training_data: azureml:used_cars_dataset:1
 outputs:
   train_data:
     type: uri_folder

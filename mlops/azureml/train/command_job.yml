@@ -3,7 +3,7 @@ type: command
 
 command: >-
   python train.py
-  --data ${{inputs.data}}
+  --data ${{inputs.training_data}}
   --n_estimators 200
   --max_depth 10
   --model_output ${{outputs.model_output}}
@@ -11,10 +11,7 @@ command: >-
 environment: azureml:train-env:5
 
 inputs:
-  data:
-    type: uri_folder
-    path: azureml:skycore_test_data:1
-    mode: download
+  training_data: azureml:used_cars_dataset:1
 
 outputs:
   model_output:

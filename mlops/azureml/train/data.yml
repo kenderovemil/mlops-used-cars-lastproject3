@@ -1,7 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
 type: uri_file
 name: used-cars-data
-version: 1
+version: 2.55654
 description: Dataset of used cars for price prediction
 path: https://projectiiimlop4426449596.blob.core.windows.net/azureml/used_cars.csv?se=2026-11-10T23%3A59%3A59Z&sp=rl&sv=2022-11-02&sr=c&sig=FN0YyGaLVs7xLw43SRTHf%2BkyrqQt3itWxDubd%2BaPzcY%3D
-

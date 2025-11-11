@@ -1,6 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
 type: uri_file
 name: used-cars-data
-version: 2.55654
 description: Dataset of used cars for price prediction
-path: data/used_cars_raw.csv
+path: azureml://datastores/skycore_blob_identity/paths/used_cars_raw.csv

@@ -11,7 +11,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Azure CLI
         run: |
@@ -24,6 +24,19 @@ jobs:
 
       - name: Install Azure ML extension
         run: az extension add -n ml -y
+
+      - name: Copy data file to mlops/azureml/train/data/
+        run: |
+          echo "📂 Copying data file to match path in pipeline YAML"
+          mkdir -p mlops/azureml/train/data
+          if [ -f "data/used_cars_raw.csv" ]; then
+            cp data/used_cars_raw.csv mlops/azureml/train/data/used_cars_raw.csv
+            echo "✅ File copied successfully"
+            ls -lh mlops/azureml/train/data/
+          else
+            echo "⚠️  Source file not found: data/used_cars_raw.csv"
+            exit 1
+          fi
 
       - name: Submit pipeline job
         run: |

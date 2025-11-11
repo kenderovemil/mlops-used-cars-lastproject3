@@ -9,7 +9,7 @@ on:
 
 env:
   RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
-  WORKSPACE_NAME: project_iii_mlops
+  WORKSPACE_NAME: project_III_MLOPS
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - name: Set RG and WS
         run: |
           echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=project_iii_mlops" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |

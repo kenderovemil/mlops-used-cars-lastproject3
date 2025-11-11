@@ -5,7 +5,7 @@ type: pipeline
 inputs:
   training_data:
     type: uri_file
-    path: ./data/used_cars_raw.csv
+    path: mlops/azureml/train/data/used_cars_raw.csv
 
 outputs:
   clean_data:

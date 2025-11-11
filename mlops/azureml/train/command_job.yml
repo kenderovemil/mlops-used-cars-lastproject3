@@ -16,7 +16,7 @@ environment: azureml:train-env:5
 inputs:
   training_data:
     type: uri_file
-    path: ./data/used_cars_raw.csv
+    path: ../../../data/used_cars_raw.csv
 
 # 📦 Изходи
 outputs:

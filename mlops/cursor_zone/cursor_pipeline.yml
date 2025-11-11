@@ -10,7 +10,7 @@ experiment_name: cursor-validation-exp
 inputs:
   training_data:
     type: uri_file
-    path: ./data/used_cars_raw.csv
+    path: ../../data/used_cars_raw.csv
 
 outputs:
   train_data:

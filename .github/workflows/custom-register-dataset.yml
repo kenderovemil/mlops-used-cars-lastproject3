@@ -102,6 +102,19 @@ jobs:
         
       - name: update-extension
         run: az extension update -n ml
+      
+      - name: Copy data file to mlops/azureml/train/data/
+        run: |
+          echo "📂 Copying data file to match path in data.yml"
+          mkdir -p mlops/azureml/train/data
+          if [ -f "data/used_cars_raw.csv" ]; then
+            cp data/used_cars_raw.csv mlops/azureml/train/data/used_cars_raw.csv
+            echo "✅ File copied successfully"
+            ls -lh mlops/azureml/train/data/
+          else
+            echo "⚠️  Source file not found: data/used_cars_raw.csv"
+          fi
+      
       - name: create-dataset-from-file
         if: ${{ inputs.file_type == ''}}
         run: |

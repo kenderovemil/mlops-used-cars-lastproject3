@@ -1,9 +1,11 @@
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
-training_data:
-  type: uri_file
-  path: ./data/used_cars_raw.csv
+# Pipeline activated - Ready to process used car pricing data
+inputs:
+  training_data:
+    type: uri_file
+    path: data/used_cars_raw.csv
 
 outputs:
   clean_data:

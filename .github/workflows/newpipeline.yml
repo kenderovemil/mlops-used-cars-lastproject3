@@ -1,52 +1,46 @@
-$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
-type: pipeline
-name: new-pipeline
-display_name: New Pipeline (Local File)
+name: Used Cars MLOps
 
-inputs:
-  training_data:
-    type: uri_file
-    path: ./src/data/used_cars_raw.csv   # локален CSV файл от репото
+on:
+  push:
+    branches: [main]
 
 jobs:
-  prep_job:
-    type: command
-    component: azureml:data_prep_component:1
-    inputs:
-      raw_data: ${{parent.inputs.training_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:data-env:1
-    outputs:
-      cleaned_data:
-        type: uri_folder
+  deploy-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  train_job:
-    type: command
-    component: azureml:train_component:1
-    inputs:
-      training_data: ${{jobs.prep_job.outputs.cleaned_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:train-env:3
-    outputs:
-      model_output:
-        type: uri_folder
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-  eval_job:
-    type: command
-    component: azureml:eval_component:1
-    inputs:
-      model_input: ${{jobs.train_job.outputs.model_output}}
-      test_data: ${{jobs.prep_job.outputs.cleaned_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:eval-env:1
-    outputs:
-      eval_output:
-        type: uri_folder
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  reg_job:
-    type: command
-    component: azureml:register_component:1
-    inputs:
-      model_input: ${{jobs.train_job.outputs.model_output}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:register-env:1
+      - name: Install Azure ML extension
+        run: az extension add -n ml -y
+
+      - name: Copy data file to mlops/azureml/train/data/
+        run: |
+          echo "📂 Copying data file to match path in pipeline YAML"
+          mkdir -p mlops/azureml/train/data
+          if [ -f "data/used_cars_raw.csv" ]; then
+            cp data/used_cars_raw.csv mlops/azureml/train/data/used_cars_raw.csv
+            echo "✅ File copied successfully"
+            ls -lh mlops/azureml/train/data/
+          else
+            echo "⚠️  Source file not found: data/used_cars_raw.csv"
+            exit 1
+          fi
+
+      - name: Submit pipeline job
+        run: |
+          az ml job create \
+            --file mlops/azureml/train/newpipeline.yml \
+            --resource-group streaming_autovehicle_pricing_MLOPS \
+            --workspace-name project_III_MLOPS

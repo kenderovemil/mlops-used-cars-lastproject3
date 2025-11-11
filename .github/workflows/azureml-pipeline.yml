@@ -9,7 +9,7 @@ on:
 
 env:
   RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
-  WORKSPACE_NAME: project_iii_mlops
+  WORKSPACE_NAME: project_III_MLOPS
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - name: Set RG and WS
         run: |
           echo "RESOURCE_GROUP=streaming_autovehicle_pricing_MLOPS" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=project_iii_mlops" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=project_III_MLOPS" >> $GITHUB_ENV
 
       - name: Update Azure CLI
         run: |
@@ -51,6 +51,18 @@ jobs:
 
       - name: Update Azure ML extension
         run: az extension update -n ml
+
+      - name: Copy data file to mlops/azureml/train/data/
+        run: |
+          echo "📂 Copying data file to match path in pipeline YAML"
+          mkdir -p mlops/azureml/train/data
+          if [ -f "data/used_cars_raw.csv" ]; then
+            cp data/used_cars_raw.csv mlops/azureml/train/data/used_cars_raw.csv
+            echo "✅ File copied successfully"
+            ls -lh mlops/azureml/train/data/
+          else
+            echo "⚠️  Source file not found: data/used_cars_raw.csv"
+          fi
 
       - name: Validate resource group and workspace
         run: |

@@ -5,9 +5,11 @@ type: command
 code: ../../../data-science/src   # папката, където е train.py
 inputs:
   train_data:
-    type: uri_folder
+    type: uri_file
+    path: data/used_cars_raw.csv
   test_data:
-    type: uri_folder
+    type: uri_file
+    path: data/used_cars_raw.csv
   n_estimators:
     type: integer
   max_depth:

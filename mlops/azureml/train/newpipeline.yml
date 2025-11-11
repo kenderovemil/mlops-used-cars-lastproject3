@@ -20,10 +20,9 @@ jobs:
     type: command
     component: azureml:prep_data_component:1
     inputs:
-      raw_data: ${{parent.inputs.training_data}}
+      raw_data: ${{inputs.training_data}}
     outputs:
-      clean_data: ${{jobs.prep_data.outputs.clean_data}}
-
+      clean_data: ${{outputs.clean_data}}
     compute: cpu-cluster
 
   train_model:
@@ -32,7 +31,7 @@ jobs:
     inputs:
       clean_data: ${{jobs.prep_data.outputs.clean_data}}
     outputs:
-      model_output: ${{parent.outputs.model_output}}
+      model_output: ${{outputs.model_output}}
     compute: cpu-cluster
 
   tune_model:
@@ -41,7 +40,7 @@ jobs:
     inputs:
       model_output: ${{jobs.train_model.outputs.model_output}}
     outputs:
-      best_model: ${{parent.outputs.best_model}}
+      best_model: ${{outputs.best_model}}
     compute: cpu-cluster
 
   register_model:

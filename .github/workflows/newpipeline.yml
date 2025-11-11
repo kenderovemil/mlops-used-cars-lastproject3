@@ -1,52 +1,27 @@
-$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
-type: pipeline
-name: new-pipeline
-display_name: New Pipeline (Local File)
+name: Deploy AzureML Pipeline
 
-inputs:
-  training_data:
-    type: uri_file
-    path: ./data/used_cars_raw.csv
+on:
+  push:
+    branches: [main]
 
 jobs:
-  prep_job:
-    type: command
-    component: azureml:data_prep_component:1
-    inputs:
-      raw_data: ${{parent.inputs.training_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:data-env:1
-    outputs:
-      cleaned_data:
-        type: uri_folder
+  deploy-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-  train_job:
-    type: command
-    component: azureml:train_component:1
-    inputs:
-      training_data: ${{jobs.prep_job.outputs.cleaned_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:train-env:3
-    outputs:
-      model_output:
-        type: uri_folder
+      - name: Set up Azure CLI
+        uses: azure/setup-azure@v3
+        with:
+          version: latest
 
-  eval_job:
-    type: command
-    component: azureml:eval_component:1
-    inputs:
-      model_input: ${{jobs.train_job.outputs.model_output}}
-      test_data: ${{jobs.prep_job.outputs.cleaned_data}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:eval-env:1
-    outputs:
-      eval_output:
-        type: uri_folder
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
-  reg_job:
-    type: command
-    component: azureml:register_component:1
-    inputs:
-      model_input: ${{jobs.train_job.outputs.model_output}}
-    compute: azureml:lastprojectcompute
-    environment: azureml:register-env:1
+      - name: Submit pipeline job
+        run: |
+          az ml job create \
+            --file mlops/azureml/train/newpipeline.yml \
+            --resource-group streaming_autovehicle_pricing_MLOPS \
+            --workspace-name project_III_MLOPS

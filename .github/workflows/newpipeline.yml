@@ -1,4 +1,4 @@
-name: Deploy AzureML Pipeline
+name: Used Cars MLOps
 
 on:
   push:

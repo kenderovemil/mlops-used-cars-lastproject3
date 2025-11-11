@@ -6,7 +6,7 @@ display_name: New Pipeline (Local File)
 inputs:
   training_data:
     type: uri_file
-    path: ./src/data/used_cars_raw.csv   # локален CSV файл от репото
+    path: ./data/used_cars_raw.csv
 
 jobs:
   prep_job:

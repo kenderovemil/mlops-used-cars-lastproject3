@@ -1,9 +1,11 @@
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
-training_data:
-  type: uri_file
-  path: ./data/used_cars_raw.csv
+
+inputs:
+  training_data:
+    type: uri_file
+    path: azureml:used_cars_raw:1
 
 outputs:
   clean_data:
@@ -47,3 +49,5 @@ jobs:
     inputs:
       best_model: ${{jobs.tune_model.outputs.best_model}}
     compute: cpu-cluster
+
+

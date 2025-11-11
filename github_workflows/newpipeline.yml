@@ -4,10 +4,7 @@ type: pipeline
 inputs:
   training_data:
     type: uri_file
-    default: azureml:used-cars-raw:1
-
-# inputs:
-#   training_data: azureml:used-cars-data:2.55654
+    path: ./data/used_cars_raw.csv
 
 outputs:
   clean_data:

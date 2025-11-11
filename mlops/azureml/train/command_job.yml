@@ -14,7 +14,9 @@ environment: azureml:train-env:5
 
 # 📂 Входове
 inputs:
-  training_data: azureml:used-cars-data:2.55654
+  training_data:
+    type: uri_file
+    path: ./data/used_cars_raw.csv
 
 # 📦 Изходи
 outputs:

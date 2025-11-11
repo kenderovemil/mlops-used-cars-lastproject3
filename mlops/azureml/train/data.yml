@@ -3,4 +3,4 @@ type: uri_file
 name: used-cars-data
 version: 2.55654
 description: Dataset of used cars for price prediction
-path: ./data/used_cars_raw.csv
+path: mlops/azureml/train/data/used_cars_raw.csv

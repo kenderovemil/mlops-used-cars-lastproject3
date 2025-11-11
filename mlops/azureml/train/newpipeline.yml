@@ -22,7 +22,8 @@ jobs:
     inputs:
       raw_data: ${{parent.inputs.training_data}}
     outputs:
-      clean_data: ${{parent.outputs.clean_data}}
+      clean_data: ${{jobs.prep_data.outputs.clean_data}}
+
     compute: cpu-cluster
 
   train_model:

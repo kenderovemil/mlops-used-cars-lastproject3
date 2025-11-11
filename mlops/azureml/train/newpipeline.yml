@@ -1,8 +1,9 @@
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
-inputs:
-  training_data: azureml:used-cars-data:2.55654
+training_data:
+  type: uri_file
+  path: ./data/used_cars_raw.csv
 
 outputs:
   clean_data:

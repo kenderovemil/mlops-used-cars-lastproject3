@@ -25,6 +25,15 @@ jobs:
       - name: Install Azure ML extension
         run: az extension add -n ml -y
 
+      - name: Stage dataset artifact
+        run: |
+          if [ ! -f data/used_cars_raw.csv ]; then
+            echo "Dataset not found at data/used_cars_raw.csv" >&2
+            exit 1
+          fi
+          mkdir -p mlops/azureml/train/data
+          cp data/used_cars_raw.csv mlops/azureml/train/data/used_cars_raw.csv
+
       - name: Submit pipeline job
         run: |
           az ml job create \

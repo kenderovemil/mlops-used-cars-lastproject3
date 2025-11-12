@@ -2,6 +2,14 @@
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
+name: new_skycore_pipeline
+experiment_name: skycore_run
+display_name: "SkyCore Pipeline"
+
+settings:
+  subscription_id: "77c91b3f-d78c-4832-8ed2-a5dd9c501e0e"
+  resource_group: "streaming_autovehicle_pricing_MLOPS"
+  workspace: "project_III_MLOPS"
 
 inputs:
   training_data:
@@ -29,6 +37,7 @@ jobs:
   train_model:
     type: command
     component: azureml:train_model_component:1
+    environment: azureml:skycore-train-env-used-cars-mlops:1
     inputs:
       clean_data: ${{parent.jobs.prep_data.outputs.clean_data}}
     outputs:
@@ -50,3 +59,4 @@ jobs:
     inputs:
       best_model: ${{parent.jobs.tune_model.outputs.best_model}}
     compute: cpu-cluster
+

@@ -1,3 +1,4 @@
+# Pipeline execution triggered: 2025-11-12
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline

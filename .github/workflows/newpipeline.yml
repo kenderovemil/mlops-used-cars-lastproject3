@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
 
+env:
+  AZURE_SUBSCRIPTION_ID: "77c91b3f-d78c-4832-8ed2-a5dd9c501e0e"
+  RESOURCE_GROUP: streaming_autovehicle_pricing_MLOPS
+  WORKSPACE_NAME: project_III_MLOPS
+
 jobs:
   deploy-pipeline:
     runs-on: ubuntu-latest

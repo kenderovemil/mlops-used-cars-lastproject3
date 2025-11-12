@@ -1,0 +1,53 @@
+---
+# Pipeline Diagnostics Report
+
+## 1. Error Summary
+### Key Error Message (Azure ML, GitHub Actions)
+* Error: (UserError) Existing properties cannot be modified.
+* Code: UserError
+* Message: Existing properties cannot be modified.
+* Details: The AzureML resource/workspace contains a component called 'managementfrontend'. When the pipeline tries to update this component's properties or tags, AzureML refuses due to immutability. 
+* InnerError: 'Immutable' / 'ExistingTagsAndPropertiesImmutable'.
+
+#### What does it mean?
+- Once registered, tags, properties, and some metadata for AzureML components (such as 'managementfrontend') CANNOT be changed.
+- Attempts to update these immutable fields cause job failure.
+- Affected job: Pipeline submission referencing or attempting to update this component.
+- Other jobs (that do not interact with the immutable resource) can run successfully.
+
+## 2. Diagnostics & Investigation Steps
+- Workflow files and pipeline YAML were checked for correctness.
+- Referenced components in YAML are registered as: prep_data_component, train_model_component, tune_model_component, register_model_component, managementfrontend (problematic one).
+- Dataset, paths, environment, and Azure CLI execution appear correct; issue is NOT with GitHub Actions or artifact upload.
+- Error confirmed in both remote Azure ML runs and GitHub-triggered pipeline runs—so issue is in Azure ML configuration/state.
+
+## 3. Why Does Job Succeed Sometimes, Fail Others?
+- When pipeline jobs do NOT attempt to update immutable Azure ML properties or tags (or do not reference the problematic resource), most jobs succeed.
+- Any job that attempts to update 'managementfrontend' (or another immutable component or property) will fail.
+- This can seem intermittent if pipeline or component versions/properties/tags are changed between runs.
+
+## 4. Detailed Recommendations
+- **Never attempt to modify (change tags/properties/metadata)** of an existing Azure ML component with the same name/version.
+- **Register a new component:** If updates are needed, use a new unique name (e.g., managementfrontend_v2) and/or increment the version.
+- **Update pipeline YAML** to point to the new component name/version.
+- **If possible, delete the old Azure ML component** (if not needed for other workloads).
+- **Coordinate with collaborators/team:** Someone may have registered the original 'managementfrontend' with different tags/properties. Conflicting changes will cause errors.
+- **For the quickest fix:**
+    - Register a new version/name instead of modifying existing.
+    - Audit your workspace for lingering resources (remove if necessary, with caution).
+- **For future work:**
+    - Ensure all pipeline/job specifications match the exact component metadata registered in AzureML.
+    - Standardize component and job registration practices among your collaborators.
+
+## 5. Helpful Links
+- [AzureML Component Immutability Documentation](https://learn.microsoft.com/en-us/azure/machine-learning/reference-immutable)
+- [AzureML SDK Reference](https://learn.microsoft.com/en-us/python/api/overview/azure/ml/?view=azure-ml-py)
+- [GitHub Actions for AzureML Pipelines](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-ci-cd)
+
+## 6. Share This Report
+This diagnosis is built from direct pipeline log evidence, AzureML API error codes, and workflow provenance. It is suitable for sharing with collaborating AI agents or colleagues working on similar GitOps/MLOps setups.
+
+---
+
+Date/time: 2025-11-12 18:52 UTC
+Prepared by: GitHub Copilot Diagnostics

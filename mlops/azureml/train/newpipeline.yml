@@ -1,11 +1,11 @@
 name: full_pipeline
 description: End-to-end ML workflow integrating data prep, training, tuning, and registration
 type: pipeline
-# Pipeline activated - Ready to process used car pricing data
+
 inputs:
   training_data:
     type: uri_file
-    path: data/used_cars_raw.csv
+    path: azureml:used_cars_raw:1
 
 outputs:
   clean_data:
@@ -29,7 +29,7 @@ jobs:
     type: command
     component: azureml:train_model_component:1
     inputs:
-      clean_data: ${{jobs.prep_data.outputs.clean_data}}
+      clean_data: ${{parent.jobs.prep_data.outputs.clean_data}}
     outputs:
       model_output: ${{parent.outputs.model_output}}
     compute: cpu-cluster
@@ -38,7 +38,7 @@ jobs:
     type: command
     component: azureml:tune_model_component:1
     inputs:
-      model_output: ${{jobs.train_model.outputs.model_output}}
+      model_output: ${{parent.jobs.train_model.outputs.model_output}}
     outputs:
       best_model: ${{parent.outputs.best_model}}
     compute: cpu-cluster
@@ -47,5 +47,5 @@ jobs:
     type: command
     component: azureml:register_model_component:1
     inputs:
-      best_model: ${{jobs.tune_model.outputs.best_model}}
+      best_model: ${{parent.jobs.tune_model.outputs.best_model}}
     compute: cpu-cluster

@@ -1,7 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
-
-name: skycore-train-env-used-cars-mlops
-version: 1
+name: skycore-train-env-used-cars-mlops-v3
+version: 13
 image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
 conda_file: train-conda.yml
 description: Environment for training used cars price prediction model

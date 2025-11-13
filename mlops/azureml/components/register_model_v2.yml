@@ -1,0 +1,16 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: register_model_component
+version: 2
+type: command
+display_name: Register model
+description: Register trained model
+inputs:
+  best_model:
+    type: uri_folder
+code: ../../../data-science/src   # от components до data-science/src
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38:1
+command: echo "Hello AzureML"
+
+# command: >-
+#   python register.py
+#   --model_path ${{inputs.best_model}}

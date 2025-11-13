@@ -1,0 +1,20 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+name: prep_component_embedded
+version: 1
+display_name: "Data Preparation (Embedded Data)"
+description: "Prepares data with CSV embedded directly in Python script - no external data access"
+
+code: ../../../data-science/src
+command: >-
+  python prep_embedded.py
+  --train_data ${{outputs.train_data}}
+  --test_data ${{outputs.test_data}}
+
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13
+
+outputs:
+  train_data:
+    type: uri_folder
+  test_data:
+    type: uri_folder

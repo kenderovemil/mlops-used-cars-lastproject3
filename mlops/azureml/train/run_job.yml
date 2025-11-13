@@ -1,0 +1,23 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+description: Minimal command job to read CSV and produce outputs without components
+experiment_name: kenderov
+
+compute: azureml:cpu-cluster
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13
+
+inputs:
+  training_data:
+    type: uri_file
+    path: azureml:used_cars_raw:1
+    mode: ro_mount
+
+outputs:
+  clean_data:
+    type: uri_folder
+    mode: rw_mount
+
+code: ./mlops/components/prep_data
+command: >-
+  python prep_data.py
+  --input ${{inputs.training_data}}
+  --output ${{outputs.clean_data}}

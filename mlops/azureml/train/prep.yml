@@ -1,9 +1,9 @@
-
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: prep_component
 display_name: prep-data
+version: 3
 type: command
-code: ../../../data-science/src   # папката, където е prep.py
+code: ../../../data-science/src
 inputs:
   raw_data:
     type: uri_file
@@ -17,5 +17,4 @@ command: >-
   --raw_data ${{inputs.raw_data}}
   --train_data ${{outputs.train_data}}
   --test_data ${{outputs.test_data}}
-environment: azureml:used-cars-env:1
-
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13

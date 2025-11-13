@@ -1,0 +1,20 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: tune_model_component
+version: 2
+type: command
+display_name: Tune model
+description: Hyperparameter tuning
+inputs:
+  model_output:
+    type: uri_folder
+outputs:
+  best_model:
+    type: uri_folder
+code: ../../../github_workflows/src   # от components до github_workflows/src
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38:1
+command: echo "Hello AzureML"
+
+# command: >-
+#   python tune.py
+#   --in ${{inputs.model_output}}
+#   --out ${{outputs.best_model}}

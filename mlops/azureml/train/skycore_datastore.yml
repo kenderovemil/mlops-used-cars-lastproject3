@@ -1,0 +1,8 @@
+$schema: https://azuremlschemas.azureedge.net/latest/azureBlobDatastore.schema.json
+name: skycore_datastore_accountkey
+type: azure_blob
+description: "SkyCore external storage with account key authentication"
+account_name: skycorestorage
+container_name: skycore
+credentials:
+  account_key: <YOUR_STORAGE_ACCOUNT_KEY_HERE>

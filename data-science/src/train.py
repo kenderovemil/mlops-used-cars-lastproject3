@@ -31,7 +31,7 @@ def write_diagnostics(args, mse, r2):
 def resolve_data_path(data_arg: str) -> str:
     """Resolve dataset path for AzureML or local runs."""
     if data_arg is None:
-        raise ValueError("❌ No --data argument provided. Please specify a dataset path or URL.")
+        raise ValueError("❌ No data argument provided. Please specify a dataset path.")
 
     # If it's a directory (AzureML mounts inputs as dirs), pick first CSV
     if os.path.isdir(data_arg):
@@ -53,21 +53,26 @@ def resolve_data_path(data_arg: str) -> str:
 def main(args):
     print("🚀 train.py started", flush=True)
 
-    data_path = resolve_data_path(args.data)
-    print(f"📂 Loading dataset from: {data_path}", flush=True)
+    # Load train and test data
+    train_path = resolve_data_path(args.train_data)
+    test_path = resolve_data_path(args.test_data)
+    print(f"📂 Loading train data from: {train_path}", flush=True)
+    print(f"📂 Loading test data from: {test_path}", flush=True)
 
-    df = pd.read_csv(data_path)
-    print(f"✅ Dataset shape: {df.shape}", flush=True)
+    train_df = pd.read_csv(train_path)
+    test_df = pd.read_csv(test_path)
+    print(f"✅ Train dataset shape: {train_df.shape}", flush=True)
+    print(f"✅ Test dataset shape: {test_df.shape}", flush=True)
 
-    if "price" not in df.columns:
-        raise ValueError("❌ Dataset must contain a 'price' column as target variable.")
+    if "price" not in train_df.columns:
+        raise ValueError("❌ Train dataset must contain a 'price' column as target variable.")
+    if "price" not in test_df.columns:
+        raise ValueError("❌ Test dataset must contain a 'price' column as target variable.")
 
-    X = df.drop("price", axis=1)
-    y = df["price"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train = train_df.drop("price", axis=1)
+    y_train = train_df["price"]
+    X_test = test_df.drop("price", axis=1)
+    y_test = test_df["price"]
 
     categorical_cols = X_train.select_dtypes(include=["object", "category"]).columns
     numeric_cols = X_train.select_dtypes(exclude=["object", "category"]).columns
@@ -108,7 +113,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, help="Path or URL to dataset (CSV)", required=True)
+    parser.add_argument("--train_data", type=str, help="Path to train data folder", required=True)
+    parser.add_argument("--test_data", type=str, help="Path to test data folder", required=True)
     parser.add_argument("--n_estimators", type=int, default=100)
     parser.add_argument("--max_depth", type=int, default=None)
     parser.add_argument("--model_output", type=str, required=True)

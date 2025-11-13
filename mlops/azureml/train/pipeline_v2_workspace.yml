@@ -1,30 +1,37 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 type: pipeline
-display_name: "SkyCore Used Cars Pipeline - Local Data"
-experiment_name: skycore_used_cars_pipeline
+display_name: "Used Cars Pipeline - New Workspace (Identity Auth)"
+experiment_name: used_cars_pipeline_v2
 
 inputs:
-  training_data:
+  raw_data:
     type: uri_file
-    path: /home/azureuser/cloudfiles/code/Users/kenderov.emil/data/used_cars.csv
+    path: azureml:used_cars_data:2
+    mode: download
+
+settings:
+  default_compute: azureml:cpu-cluster
 
 outputs:
   train_data:
     type: uri_folder
+    mode: rw_mount
   test_data:
     type: uri_folder
+    mode: rw_mount
   model_output:
     type: uri_folder
+    mode: rw_mount
   registered_model_info:
     type: uri_folder
+    mode: rw_mount
 
 jobs:
   prep_data:
     type: command
     component: azureml:prep_component:3
-    compute: azureml:cpu-cluster
     inputs:
-      raw_data: ${{parent.inputs.training_data}}
+      raw_data: ${{parent.inputs.raw_data}}
     outputs:
       train_data: ${{parent.outputs.train_data}}
       test_data: ${{parent.outputs.test_data}}
@@ -32,7 +39,6 @@ jobs:
   train_model:
     type: command
     component: azureml:train_model_component:3
-    compute: azureml:cpu-cluster
     inputs:
       train_data: ${{parent.jobs.prep_data.outputs.train_data}}
       test_data: ${{parent.jobs.prep_data.outputs.test_data}}
@@ -44,9 +50,8 @@ jobs:
   register_model:
     type: command
     component: azureml:register_component:3
-    compute: azureml:cpu-cluster
     inputs:
-      model_name: "skycore_rf_model"
+      model_name: "used_cars_price_prediction_model"
       model_path: ${{parent.jobs.train_model.outputs.model_output}}
     outputs:
       model_info_output_path: ${{parent.outputs.registered_model_info}}

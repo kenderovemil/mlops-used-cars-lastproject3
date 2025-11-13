@@ -1,12 +1,13 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 type: pipeline
-display_name: "SkyCore Used Cars Pipeline - Local Data"
+display_name: "SkyCore Pipeline - External Storage (SAS Auth)"
 experiment_name: skycore_used_cars_pipeline
 
 inputs:
-  training_data:
+  raw_data:
     type: uri_file
-    path: /home/azureuser/cloudfiles/code/Users/kenderov.emil/data/used_cars.csv
+    path: "https://skycorestorage.blob.core.windows.net/skycore/used_cars_raw.csv?se=2025-11-20T16%3A12%3A34Z&sp=r&sv=2025-11-05&sr=c&sig=aAbSoxt8gc69599Zd%2B9Tt7RSQLp8Us%2Bvw4CZUYjg4hY%3D"
+    mode: download
 
 outputs:
   train_data:
@@ -24,7 +25,8 @@ jobs:
     component: azureml:prep_component:3
     compute: azureml:cpu-cluster
     inputs:
-      raw_data: ${{parent.inputs.training_data}}
+      raw_data: ${{parent.inputs.raw_data}}
+      test_train_ratio: 0.2
     outputs:
       train_data: ${{parent.outputs.train_data}}
       test_data: ${{parent.outputs.test_data}}
@@ -46,7 +48,7 @@ jobs:
     component: azureml:register_component:3
     compute: azureml:cpu-cluster
     inputs:
-      model_name: "skycore_rf_model"
+      model_name: "skycore_rf_model_sas"
       model_path: ${{parent.jobs.train_model.outputs.model_output}}
     outputs:
       model_info_output_path: ${{parent.outputs.registered_model_info}}

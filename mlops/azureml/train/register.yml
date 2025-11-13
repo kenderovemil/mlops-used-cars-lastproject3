@@ -1,6 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: register_component
 display_name: register-model
+version: 3
 type: command
 code: ../../../data-science/src
 inputs:
@@ -16,5 +17,4 @@ command: >-
   --model_name ${{inputs.model_name}}
   --model_path ${{inputs.model_path}}
   --model_info_output_path ${{outputs.model_info_output_path}}
-environment: azureml:used-cars-env:1
-
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13

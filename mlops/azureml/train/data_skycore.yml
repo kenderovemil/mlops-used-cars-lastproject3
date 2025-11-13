@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: used_cars_skycore
+version: "1"
+description: "Used cars dataset from SkyCore storage"
+type: uri_file
+path: azureml://datastores/skycore_datastore_accountkey/paths/used_cars_raw.csv

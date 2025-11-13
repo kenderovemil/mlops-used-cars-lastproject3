@@ -1,0 +1,33 @@
+
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: smoke_test_component
+version: 1
+type: command
+display_name: Smoke Test
+description: Minimal test to verify compute and environment
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38:1
+command: echo "Hello AzureML"
+
+# $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+# name: prep_data_component
+# version: 2
+# type: command
+# display_name: Prepare data
+# description: Clean and transform raw input data
+# inputs:
+#   raw_data:
+#     type: uri_file
+# outputs:
+#   train_data:
+#     type: uri_folder
+#   test_data:
+#     type: uri_folder
+# code: ../../../data-science/src   # от components до data-science/src
+# environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38:1
+# command: echo "Hello AzureML"
+
+# # command: >-
+# #   python prep.py
+# #   --raw_data ${{inputs.raw_data}}
+# #   --train_data ${{outputs.train_data}}
+# #   --test_data ${{outputs.test_data}}

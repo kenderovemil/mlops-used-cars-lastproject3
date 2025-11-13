@@ -1,0 +1,21 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+name: prep_component_bundled
+version: 1
+display_name: "Data Preparation (Bundled CSV)"
+description: "Prepares data with CSV bundled in code directory"
+
+code: ../../../data-science/src
+command: >-
+  python prep_bundled.py
+  --raw_data used_cars.csv
+  --train_data ${{outputs.train_data}}
+  --test_data ${{outputs.test_data}}
+
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13
+
+outputs:
+  train_data:
+    type: uri_folder
+  test_data:
+    type: uri_folder

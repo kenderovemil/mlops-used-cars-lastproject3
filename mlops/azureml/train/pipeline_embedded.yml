@@ -1,12 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 type: pipeline
-display_name: "SkyCore Used Cars Pipeline - Local Data"
+display_name: "SkyCore Pipeline - Embedded Data (No External Storage)"
 experiment_name: skycore_used_cars_pipeline
-
-inputs:
-  training_data:
-    type: uri_file
-    path: /home/azureuser/cloudfiles/code/Users/kenderov.emil/data/used_cars.csv
 
 outputs:
   train_data:
@@ -21,10 +16,8 @@ outputs:
 jobs:
   prep_data:
     type: command
-    component: azureml:prep_component:3
+    component: azureml:prep_component_embedded:1
     compute: azureml:cpu-cluster
-    inputs:
-      raw_data: ${{parent.inputs.training_data}}
     outputs:
       train_data: ${{parent.outputs.train_data}}
       test_data: ${{parent.outputs.test_data}}

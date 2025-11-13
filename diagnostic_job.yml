@@ -1,0 +1,8 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+code: .
+command: python diagnostic_test.py
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13
+compute: azureml:cpu-cluster
+display_name: "Diagnostic Test Job"
+experiment_name: diagnostics

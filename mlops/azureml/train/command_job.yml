@@ -1,7 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
 type: command
 
-# 🛠️ Командата, която ще се изпълни
 command: >-
   python train.py
   --data ${{inputs.training_data}}
@@ -9,32 +8,27 @@ command: >-
   --max_depth 10
   --model_output ${{outputs.model_output}}
 
-# 🌍 Environment (регистриран в Azure ML)
-environment: azureml:train-env:5
+environment: azureml:skycore-train-env-used-cars-mlops-v3:13
 
-# 📂 Входове
 inputs:
   training_data:
     type: uri_file
     path: data/used_cars_raw.csv
 
-# 📦 Изходи
 outputs:
   model_output:
     type: uri_folder
     mode: rw_mount
 
-# ⚙️ Compute target
 compute: azureml:lastprojectcompute
 
-# 🧪 Метаданни за експеримента
 experiment_name: project_III_MLOPS
 display_name: used-cars-train-job
 description: "Training job for SkyCore — RandomForest on used_cars dataset"
 
-# 🏷️ Тагове за проследяване
 tags:
   project: SkyCore
   owner: Emil
   purpose: training
   dataset_version: "2.55654"
+

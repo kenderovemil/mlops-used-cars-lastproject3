@@ -1,22 +1,31 @@
-$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 type: pipeline
-display_name: "SkyCore Used Cars Pipeline - Local Data"
-experiment_name: skycore_used_cars_pipeline
+name: full_pipeline_skycore_production
+experiment_name: skycore_production_run
+display_name: "SkyCore Production Pipeline"
+description: Complete pipeline with data prep, train, and register
+
+tags:
+  purpose: "production"
+  phase: "deployment"
 
 inputs:
   training_data:
     type: uri_file
-    path: /home/azureuser/cloudfiles/code/Users/kenderov.emil/data/used_cars.csv
+    path: azureml:used_cars_raw:1
 
 outputs:
   train_data:
     type: uri_folder
+    mode: rw_mount
   test_data:
     type: uri_folder
+    mode: rw_mount
   model_output:
     type: uri_folder
+    mode: rw_mount
   registered_model_info:
     type: uri_folder
+    mode: rw_mount
 
 jobs:
   prep_data:
@@ -36,7 +45,7 @@ jobs:
     inputs:
       train_data: ${{parent.jobs.prep_data.outputs.train_data}}
       test_data: ${{parent.jobs.prep_data.outputs.test_data}}
-      n_estimators: 200
+      n_estimators: 100
       max_depth: 10
     outputs:
       model_output: ${{parent.outputs.model_output}}
@@ -46,7 +55,7 @@ jobs:
     component: azureml:register_component:3
     compute: azureml:cpu-cluster
     inputs:
-      model_name: "skycore_rf_model"
+      model_name: "skycore_production_model"
       model_path: ${{parent.jobs.train_model.outputs.model_output}}
     outputs:
       model_info_output_path: ${{parent.outputs.registered_model_info}}
